@@ -366,7 +366,7 @@ tbody tr:hover td { background: #fafbff; }
   <div class="loading-box">
     <div class="loading-spinner"></div>
     <div class="loading-title">Loading Dashboard</div>
-    <div class="loading-sub" id="loadingMsg">Connecting to SharePoint…</div>
+    <div class="loading-sub" id="loadingMsg">Fetching data from GitHub…</div>
   </div>
 </div>
 
@@ -685,16 +685,28 @@ function setSyncTime() {
 function parseXLSX(buf) {
   const wb = XLSX.read(buf, { type: 'array', cellDates: true });
   const sn = wb.SheetNames.find(n => n.toLowerCase().includes('projects tracker')) || wb.SheetNames[0];
+
+  // Helper: safely parse numeric values from Excel (handles floats, strings, scientific notation)
+  const num = v => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = typeof v === 'number' ? v : parseFloat(v.toString().replace(/,/g,''));
+    return isFinite(n) ? n : null;
+  };
+
   return XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: null })
-    .filter(r => r['Project Name'] && r['Project Name'].toString().trim())
+    .filter(r => {
+      const name = (r['Project Name'] || '').toString().trim();
+      // Filter out empty rows and rows that have no stage/status (naming entries, etc.)
+      return name.length > 0 && (r['Progress'] || r['Status'] || r['Project Cost'] || r['% Completion']);
+    })
     .map(r => ({
       name:      (r['Project Name'] || '').toString().trim(),
       category:  (r['Category'] || '').toString().trim(),
-      area:      parseFloat(r['Built-up Area (sq ft)']) || null,
-      cost:      parseFloat(r['Project Cost']) || null,
-      committed: parseFloat(r['Funds Committed (After Admin Cost)']) || null,
+      area:      num(r['Built-up Area (sq ft)']),
+      cost:      num(r['Project Cost']),
+      committed: num(r['Funds Committed (After Admin Cost)']),
       status:    (r['Status'] || 'Active').toString().trim(),
-      pct:       parseFloat(r['% Completion']) || null,
+      pct:       num(r['% Completion']),
       progress:  (r['Progress'] || '').toString().trim(),
       target:    r['Target Completion'],
     }));
@@ -848,7 +860,7 @@ function render(projects) {
     </tr>`;
   }).join('');
 
-  document.getElementById('tSub').textContent = `${projects.length} projects · Live from SharePoint`;
+  document.getElementById('tSub').textContent = `${projects.length} projects · Live from GitHub`;
   renderTable(curFilter, null);
 }
 
