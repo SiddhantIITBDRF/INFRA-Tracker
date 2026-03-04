@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IIT Bombay — Infrastructure Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181c27;
+  --surface2: #1e2332;
+  --surface3: #242938;
+  --border: rgba(255,255,255,.07);
+  --border2: rgba(255,255,255,.12);
+  --text: #e8eaf0;
+  --muted: #6b7280;
+  --muted2: #9ca3af;
+  --accent: #4f7aff;
+  --accent2: #3d63e8;
+  --green: #34d399;
+  --green-dim: rgba(52,211,153,.12);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,.12);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,.12);
+  --blue-dim: rgba(79,122,255,.12);
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13.5px; min-height: 100vh; }
+
+/* ── TOP HEADER ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-logo { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.header-logo span { color: var(--accent); }
+.header-title { font-size: .95rem; font-weight: 600; color: var(--text); }
+.header-divider { width: 1px; height: 20px; background: var(--border2); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.sync-indicator { display: flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 500; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+.sync-dot.loading { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: pulse .8s infinite; }
+.sync-dot.error { background: var(--red); box-shadow: none; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+.sync-text { color: var(--muted2); }
+.btn { padding: 6px 14px; border-radius: var(--radius-sm); font-family: var(--font); font-size: .74rem; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); transition: all .15s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+.btn:hover { background: var(--surface3); border-color: var(--border2); }
+.btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn-accent:hover { background: var(--accent2); border-color: var(--accent2); }
+
+/* ── TABS ── */
+.tabs-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  gap: 4px;
+}
+.tab {
+  padding: 14px 20px;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  user-select: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-icon { font-size: .85rem; }
+.priority-count {
+  background: var(--red-dim);
+  color: var(--red);
+  font-size: .6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ── CONTENT ── */
+.content { padding: 28px 32px; max-width: 1600px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── GRID HELPERS ── */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+.grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; margin-bottom: 20px; }
+.mb { margin-bottom: 20px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+}
+.card-sm { padding: 16px 18px; }
+.card-title { font-size: .8rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.card-sub { font-size: .67rem; color: var(--muted); margin-bottom: 16px; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+
+/* ── KPI CARDS ── */
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; position: relative; overflow: hidden; }
+.kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.kpi.blue::before { background: var(--accent); }
+.kpi.green::before { background: var(--green); }
+.kpi.amber::before { background: var(--amber); }
+.kpi.red::before { background: var(--red); }
+.kpi-label { font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+.kpi-value { font-size: 1.6rem; font-weight: 700; line-height: 1; letter-spacing: -.02em; margin-bottom: 6px; }
+.kpi-value.blue { color: var(--accent); }
+.kpi-value.green { color: var(--green); }
+.kpi-value.amber { color: var(--amber); }
+.kpi-value.red { color: var(--red); }
+.kpi-sub { font-size: .67rem; color: var(--muted); }
+.kpi-sub b { color: var(--green); font-weight: 600; }
+.kpi-sub.warn b { color: var(--amber); }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── TAG / PILL ── */
+.tag { display: inline-block; font-size: .6rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: .62rem; font-weight: 600; white-space: nowrap; }
+.pill-green { background: var(--green-dim); color: var(--green); }
+.pill-red { background: var(--red-dim); color: var(--red); }
+.pill-amber { background: var(--amber-dim); color: var(--amber); }
+.pill-blue { background: var(--blue-dim); color: var(--accent); }
+.pill-muted { background: var(--surface3); color: var(--muted2); }
+
+/* ── PROGRESS BAR ── */
+.prog-wrap { display: flex; align-items: center; gap: 8px; }
+.prog-track { flex: 1; height: 5px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.prog-label { font-size: .68rem; font-weight: 600; min-width: 32px; text-align: right; }
+
+/* ── BAR CHART ── */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-name { font-size: .72rem; font-weight: 500; width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted2); }
+.bar-track { flex: 1; height: 7px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; }
+.bar-val { font-size: .68rem; font-weight: 600; min-width: 50px; text-align: right; flex-shrink: 0; }
+
+/* ── GROUPED BAR CHART ── */
+.grouped-bar { margin-bottom: 14px; }
+.grouped-bar-label { font-size: .72rem; font-weight: 600; color: var(--text); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.grouped-bar-tracks { display: flex; flex-direction: column; gap: 4px; }
+.grouped-bar-row { display: flex; align-items: center; gap: 8px; }
+.grouped-bar-key { font-size: .6rem; color: var(--muted); width: 70px; flex-shrink: 0; }
+.grouped-bar-track { flex: 1; height: 6px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.grouped-bar-fill { height: 100%; border-radius: 99px; }
+.grouped-bar-num { font-size: .63rem; font-weight: 600; min-width: 52px; text-align: right; flex-shrink: 0; }
+
+/* ── SVG PIE / DONUT ── */
+.donut-wrap { display: flex; align-items: center; gap: 24px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.legend-row { display: flex; align-items: center; gap: 8px; font-size: .72rem; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-name { flex: 1; color: var(--muted2); }
+.legend-val { font-weight: 600; }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th { font-size: .61rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface2); white-space: nowrap; }
+tbody td { padding: 10px 12px; font-size: .76rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--surface2); }
+.td-name { font-weight: 600; max-width: 220px; }
+.td-mono { font-family: var(--mono); font-size: .7rem; color: var(--muted2); }
+.td-muted { color: var(--muted2); font-size: .72rem; }
+.td-green { color: var(--green); font-weight: 600; }
+.td-red { color: var(--red); font-weight: 600; }
+.td-amber { color: var(--amber); font-weight: 600; }
+
+/* ── PRIORITY CARD ── */
+.priority-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+}
+.priority-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.priority-card-name { font-size: .9rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.priority-card-meta { font-size: .68rem; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.priority-card-body { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 12px; }
+.pstat { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
+.pstat-label { font-size: .59rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+.pstat-val { font-size: .9rem; font-weight: 700; }
+.priority-blocks { background: var(--red-dim); border: 1px solid rgba(248,113,113,.2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: .73rem; color: var(--red); display: flex; align-items: flex-start; gap: 8px; }
+
+/* ── OVERVIEW SUMMARY CARDS ── */
+.overview-finance { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.overview-finance-label { font-size: .7rem; color: var(--muted2); }
+.overview-finance-val { font-size: .85rem; font-weight: 700; }
+
+/* ── DUAL BAR (committed vs total) ── */
+.dual-bar-wrap { display: flex; flex-direction: column; gap: 12px; }
+.dual-bar { }
+.dual-bar-header { display: flex; justify-content: space-between; font-size: .7rem; margin-bottom: 4px; }
+.dual-bar-name { font-weight: 500; color: var(--muted2); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dual-bar-nums { color: var(--muted); flex-shrink: 0; margin-left: 8px; }
+.dual-track { height: 8px; background: var(--surface3); border-radius: 99px; overflow: hidden; position: relative; }
+.dual-committed { height: 100%; border-radius: 99px; position: absolute; left: 0; top: 0; }
+.donor-note { font-size: .61rem; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── PIPELINE ── */
+.pipeline-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.pipeline-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+.pipeline-name { font-size: .75rem; font-weight: 600; margin-bottom: 5px; line-height: 1.3; }
+.pipeline-meta { font-size: .63rem; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 5px; }
+.pipeline-cost { font-size: .72rem; font-weight: 700; color: var(--amber); }
+
+/* ── STAT ROW ── */
+.stat-row { display: flex; gap: 20px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-item { flex: 1; }
+.stat-label { font-size: .61rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+.stat-val { font-size: .88rem; font-weight: 700; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ── EMPTY STATE ── */
+.empty { padding: 40px; text-align: center; color: var(--muted); font-size: .8rem; }
+.empty-icon { font-size: 2rem; margin-bottom: 10px; }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── NOTICE ── */
+.notice { background: var(--amber-dim); border: 1px solid rgba(251,191,36,.2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: .73rem; color: var(--amber); margin-bottom: 20px; display: none; }
+.notice.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">IIT Bombay <span>·</span> Development Office</div>
+    <div class="header-divider"></div>
+    <div class="header-title">Infrastructure Projects Dashboard</div>
+  </div>
+  <div class="header-right">
+    <div class="sync-indicator">
+      <div class="sync-dot loading" id="syncDot"></div>
+      <span class="sync-text" id="syncText">Connecting…</span>
+    </div>
+    <button class="btn" onclick="loadData()">↻ Refresh</button>
+    <a class="btn btn-accent" href="https://iitbacr-my.sharepoint.com/:x:/p/siddhant_gupta/IQDZGAVhkBi9RpGhseTgjS3yAZSIPjE29jPJFxkzjTQWtKo?e=1mBM61" target="_blank">↗ SharePoint</a>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <div class="tab active" onclick="switchTab('overview',this)"><span class="tab-icon">▦</span> Overview</div>
+  <div class="tab" onclick="switchTab('priority',this)" id="priorityTab"><span class="tab-icon">🔴</span> Top Priority <span class="priority-count" id="priorityCnt">0</span></div>
+  <div class="tab" onclick="switchTab('finances',this)"><span class="tab-icon">₹</span> Finances</div>
+  <div class="tab" onclick="switchTab('logistics',this)"><span class="tab-icon">📐</span> Logistics</div>
+  <div class="tab" onclick="switchTab('allprojects',this)"><span class="tab-icon">◈</span> All Projects</div>
+</div>
+
+<div class="content">
+  <div class="notice" id="syncNotice">⚠ <strong>Using cached data.</strong> Google Sheets sync failed. Data shown is from last known state.</div>
+
+  <!-- ══════════════════════════════ OVERVIEW ══════════════════════════════ -->
+  <div class="tab-panel active" id="tab-overview">
+
+    <div class="grid-4">
+      <div class="kpi blue"><div class="kpi-label">Total Projects</div><div class="kpi-value blue" id="ov-k1">—</div><div class="kpi-sub" id="ov-k1s"></div></div>
+      <div class="kpi green"><div class="kpi-label">Total Estimated Cost</div><div class="kpi-value green" id="ov-k2">—</div><div class="kpi-sub" id="ov-k2s"></div></div>
+      <div class="kpi amber"><div class="kpi-label">Funds Committed</div><div class="kpi-value amber" id="ov-k3">—</div><div class="kpi-sub warn" id="ov-k3s"></div></div>
+      <div class="kpi red"><div class="kpi-label">Funding Gap</div><div class="kpi-value red" id="ov-k4">—</div><div class="kpi-sub" id="ov-k4s"></div></div>
+    </div>
+
+    <div class="grid-3">
+      <div class="kpi blue"><div class="kpi-label">Total Built-up Area</div><div class="kpi-value blue" id="ov-k5">—</div><div class="kpi-sub" id="ov-k5s"></div></div>
+      <div class="kpi green"><div class="kpi-label">Completed Projects</div><div class="kpi-value green" id="ov-k6">—</div><div class="kpi-sub">Stage 5 &amp; Stage 8</div></div>
+      <div class="kpi amber"><div class="kpi-label">Avg. Completion</div><div class="kpi-value amber" id="ov-k7">—</div><div class="kpi-sub" id="ov-k7s"></div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Finance Summary -->
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Finance Summary</div><div class="card-sub">Category-wise cost &amp; fundraising</div></div>
+          <span class="pill pill-blue" style="font-size:.6rem">₹ Crores</span>
+        </div>
+        <div id="ov-finance-bars"></div>
+      </div>
+      <!-- Logistics Summary -->
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Logistics Summary</div><div class="card-sub">Stage distribution &amp; completion</div></div>
+        </div>
+        <div class="section-label" style="margin-bottom:12px">By Stage</div>
+        <div class="bar-chart" id="ov-stage-bars" style="margin-bottom:16px"></div>
+        <div class="divider"></div>
+        <div class="section-label" style="margin-bottom:12px">Avg Completion by Category</div>
+        <div class="bar-chart" id="ov-cat-completion"></div>
+      </div>
+    </div>
+
+    <!-- Priority / Blocks alert strip -->
+    <div id="ov-priority-strip"></div>
+
+  </div>
+
+  <!-- ══════════════════════════════ PRIORITY ══════════════════════════════ -->
+  <div class="tab-panel" id="tab-priority">
+    <div id="priority-empty" class="empty" style="display:none">
+      <div class="empty-icon">✅</div>
+      No high-priority projects currently.<br>
+      <span style="color:var(--muted);font-size:.72rem;margin-top:6px;display:block">
+        Add a <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">Priority</code> column to your Google Sheet and set a project to <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">High</code> to show it here.
+      </span>
+    </div>
+    <div id="priority-list"></div>
+  </div>
+
+  <!-- ══════════════════════════════ FINANCES ══════════════════════════════ -->
+  <div class="tab-panel" id="tab-finances">
+
+    <div class="grid-4">
+      <div class="kpi green"><div class="kpi-label">Total Project Cost</div><div class="kpi-value green" id="fin-k1">—</div><div class="kpi-sub" id="fin-k1s"></div></div>
+      <div class="kpi blue"><div class="kpi-label">Funds Committed</div><div class="kpi-value blue" id="fin-k2">—</div><div class="kpi-sub" id="fin-k2s"></div></div>
+      <div class="kpi amber"><div class="kpi-label">Funds Received</div><div class="kpi-value amber" id="fin-k3">—</div><div class="kpi-sub" id="fin-k3s"></div></div>
+      <div class="kpi red"><div class="kpi-label">Funding Gap</div><div class="kpi-value red" id="fin-k4">—</div><div class="kpi-sub" id="fin-k4s"></div></div>
+    </div>
+
+    <!-- Category-wise grouped bars -->
+    <div class="card mb">
+      <div class="card-head">
+        <div><div class="card-title">Category-wise Financial Breakdown</div><div class="card-sub">Project cost vs committed vs built-up area per category</div></div>
+        <div style="display:flex;gap:12px;font-size:.63rem;color:var(--muted);align-items:center">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent);display:inline-block"></span>Committed</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--red);opacity:.5;display:inline-block"></span>Gap</span>
+        </div>
+      </div>
+      <div id="fin-cat-bars"></div>
+    </div>
+
+    <!-- Committed vs Cost — funded projects -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Committed vs Estimated</div><div class="card-sub">Projects with active fundraising (top 10 by cost)</div></div></div>
+        <div class="dual-bar-wrap" id="fin-dual-bars"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Fundraising Pipeline</div><div class="card-sub">Projects yet to raise funds</div></div></div>
+        <div class="pipeline-grid" id="fin-pipeline" style="grid-template-columns:1fr 1fr"></div>
+      </div>
+    </div>
+
+    <!-- Full finance table -->
+    <div class="card mb">
+      <div class="card-head"><div><div class="card-title">Full Financial Table</div><div class="card-sub">All projects · INR Crores</div></div></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Project</th><th>Category</th><th>Est. Cost</th><th>Committed</th><th>Received</th><th>Gap</th><th>% Funded</th><th>Donor</th></tr></thead>
+          <tbody id="fin-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════ LOGISTICS ══════════════════════════════ -->
+  <div class="tab-panel" id="tab-logistics">
+
+    <div class="grid-4">
+      <div class="kpi blue"><div class="kpi-label">Total Built-up Area</div><div class="kpi-value blue" id="log-k1">—</div><div class="kpi-sub" id="log-k1s"></div></div>
+      <div class="kpi green"><div class="kpi-label">Under Construction</div><div class="kpi-value green" id="log-k2">—</div><div class="kpi-sub">Active build sites</div></div>
+      <div class="kpi amber"><div class="kpi-label">In Design / Planning</div><div class="kpi-value amber" id="log-k3">—</div><div class="kpi-sub">Pre-construction</div></div>
+      <div class="kpi red"><div class="kpi-label">Blocks &amp; Red Flags</div><div class="kpi-value red" id="log-k4">—</div><div class="kpi-sub">Reported impediments</div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Area by category -->
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Built-up Area by Category</div><div class="card-sub">Square feet</div></div></div>
+        <div class="bar-chart" id="log-area-cat"></div>
+      </div>
+      <!-- Completion by project -->
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Completion % by Project</div><div class="card-sub">Projects with completion data</div></div></div>
+        <div class="bar-chart" id="log-completion-bars"></div>
+      </div>
+    </div>
+
+    <!-- Stage + Pie -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Projects by Stage</div><div class="card-sub">Current planning stage distribution</div></div></div>
+        <div class="donut-wrap" id="log-stage-donut">
+          <svg width="140" height="140" viewBox="0 0 140 140" id="log-donut-svg">
+            <circle cx="70" cy="70" r="50" fill="none" stroke="#1e2332" stroke-width="22"/>
+            <text x="70" y="66" text-anchor="middle" font-size="18" font-weight="700" fill="#e8eaf0" font-family="DM Sans,sans-serif" id="log-donut-num">—</text>
+            <text x="70" y="80" text-anchor="middle" font-size="9" fill="#6b7280" font-family="DM Sans,sans-serif">projects</text>
+          </svg>
+          <div class="donut-legend" id="log-donut-legend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Area by Project</div><div class="card-sub">Top 12 by built-up area (sq ft)</div></div></div>
+        <div class="bar-chart" id="log-area-proj"></div>
+      </div>
+    </div>
+
+    <!-- Logistics table -->
+    <div class="card mb">
+      <div class="card-head"><div><div class="card-title">Logistics Overview</div><div class="card-sub">All projects · completion, area, stage, timeline</div></div></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Project</th><th>Category</th><th>Stage / Progress</th><th>% Complete</th><th>Built-up Area</th><th>Floors</th><th>Start</th><th>Target</th><th>Blocks</th><th>Status</th></tr></thead>
+          <tbody id="log-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════ ALL PROJECTS ══════════════════════════════ -->
+  <div class="tab-panel" id="tab-allprojects">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="ap-filters">
+        <button class="btn active" onclick="apFilter('all',this)" style="font-size:.68rem;background:var(--accent);border-color:var(--accent);color:#fff" id="apf-all">All</button>
+        <button class="btn" onclick="apFilter('Academic',this)" style="font-size:.68rem" id="apf-Academic">Academic</button>
+        <button class="btn" onclick="apFilter('Student Housing',this)" style="font-size:.68rem" id="apf-Housing">Hostels</button>
+        <button class="btn" onclick="apFilter('Research',this)" style="font-size:.68rem" id="apf-Research">Research</button>
+        <button class="btn" onclick="apFilter('Non-academic',this)" style="font-size:.68rem" id="apf-NonAcademic">Non-Academic</button>
+        <button class="btn" onclick="apFilter('Lab',this)" style="font-size:.68rem" id="apf-Lab">Lab</button>
+      </div>
+      <div style="font-size:.7rem;color:var(--muted)" id="ap-count"></div>
+    </div>
+
+    <div class="card mb">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>WBS</th><th>Project Name</th><th>Category</th><th>Priority</th>
+              <th>Stage</th><th>% Done</th>
+              <th>Cost (Cr)</th><th>Committed (Cr)</th><th>Gap (Cr)</th>
+              <th>Area (sq ft)</th><th>Donor</th>
+              <th>Start</th><th>Target</th><th>Status</th><th>Blocks</th>
+            </tr>
+          </thead>
+          <tbody id="ap-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /content -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSfkY7tZfT6wOI7d6bhneIshAORjJci0ooYpEvqEfWw0cTuVcNbPvpIy9UE5dm-mA/pub?output=csv";
+const REFRESH_MS = 5 * 60 * 1000;
+
+// ═══════════════════════════════════════════════════════════════
+//  FALLBACK DATA
+// ═══════════════════════════════════════════════════════════════
+const FALLBACK = [{"name": "Hostel 4", "wbs": "DO/2025-HCT4", "category": "Student Housing", "area": 398426.0, "cost": 1600000000.0, "committed": 200000000.0, "received": 169750000.0, "status": "Active", "pct": 0.0, "progress": "Completed and Active", "target": "2025", "start": "2023-03-01", "donor": "Multiple", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Desai Sethi School of Entreprenurship new Building", "wbs": "DO/2021-DSSE", "category": "Research", "area": 134506.0, "cost": 600000000.0, "committed": 233006082.0, "received": 226015900.0, "status": "Active", "pct": 1.0, "progress": "Stage8- Completed", "target": "2025-08-01", "start": "2023", "donor": "Bharat Desai (27Cr)", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "NSAC", "wbs": "", "category": "Academic", "area": 57242.0, "cost": 450000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": 0.9971933001358081, "progress": "Completed and Active", "target": "2026-07-01", "start": "2024", "donor": "open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Rahul Bajaj Technology Innovation Centre", "wbs": "DO/2019-RBIC", "category": "Other", "area": 208460.0, "cost": 700000000.0, "committed": 250000000.0, "received": 250000000.0, "status": "Non-Active", "pct": null, "progress": "Stage8- Completed", "target": null, "start": null, "donor": "Rahul Bajaj", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "A91 Eco Hub", "wbs": "", "category": "Research", "area": 54235.0, "cost": 900000000.0, "committed": 160000000.0, "received": 155200000.0, "status": "Non-Active", "pct": null, "progress": "Completed and Active", "target": "2024", "start": null, "donor": "Abhay Pandey", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "COPT- BETIC", "wbs": "DO/2025-ICICI", "category": "Research", "area": 156496.0, "cost": 990000000.0, "committed": 142700000.0, "received": 82600000.0, "status": "Active", "pct": 0.9951210697506324, "progress": "Completed and Active", "target": "2026-10-01", "start": "2024", "donor": "ICICI 14Cr (1/7 of the total project) for BETIC Centre to be hosted", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "AB1", "wbs": "DO/2024-MOSL", "category": "Academic", "area": 386209.0, "cost": 1900000000.0, "committed": 1100000000.0, "received": 348971000.0, "status": "Active", "pct": 0.9910469249111441, "progress": "Stage3-Under Construction", "target": "2027-04-01", "start": "2024", "donor": "Motilal Oswal (95 Cr), Ashank Desai (ADCPS) (10Cr), Fedex (7.5Cr) \u00b7 CMInDS (Lakhamraju-17.53 Cr, SBI-7.78 Cr, Gupshup-9.76 Cr, Arpit Mathur-5.61Cr, Kashyap & Shruti Deorah-5.61Cr, S. Rizvi- 1.45Cr ) (48 Cr)  \u00b7 Steel From JSW (in Kind)", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "AB2", "wbs": "DO/2023-FEDX", "category": "Academic", "area": null, "cost": null, "committed": 562600000.0, "received": 267099003.0, "status": "Active", "pct": 0.9910469249111441, "progress": "Stage3-Under Construction", "target": "2027-04-01", "start": "2024", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "ASB1", "wbs": "", "category": "Academic", "area": 353282.0, "cost": 2180000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": 0.9937518327205468, "progress": "Stage3-Under Construction", "target": "2026-12-01", "start": "2024", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "ASB2", "wbs": "", "category": "Other", "area": 115970.0, "cost": 900000000.0, "committed": 1024500000.0, "received": 347000000.0, "status": "Active", "pct": 0.9937518327205468, "progress": "Stage3-Under Construction", "target": "2026-12-01", "start": "2024", "donor": "Wadhwani (60 Cr), Nandan (20 Cr) \u00b7 Koita\u2019s (KCDH) (15 Cr)", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "KV", "wbs": "", "category": "Non-academic", "area": 0.0, "cost": 599480000.0, "committed": 599480000.0, "received": null, "status": "Active", "pct": 0.9937518327205468, "progress": "Stage3-Under Construction", "target": "2026-12-01", "start": "2024", "donor": "Prashant Sharma", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Faculty Housing", "wbs": "", "category": "Non-academic", "area": 455452.0, "cost": 1600000000.0, "committed": 800000000.0, "received": 800000000.0, "status": "Active", "pct": null, "progress": "Stage3-Under Construction", "target": null, "start": null, "donor": "Nandan Nilkani (80 Cr)", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Research HUB", "wbs": "", "category": "Research", "area": 160500.0, "cost": 1410000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": 0.9856362985502058, "progress": "Stage2-Design", "target": "2027-12-01", "start": "2026", "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Alumni centre", "wbs": "DO/2018-MKAC", "category": "Non-academic", "area": 155454.0, "cost": 110000000.0, "committed": 175000000.0, "received": 77200000.0, "status": "Active", "pct": 1.0, "progress": "Stage2-Design", "target": "2028", "start": "2026", "donor": "Mohan Kavrie, Everest (10Cr +7.5+5.42Cr)", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "AB3", "wbs": "", "category": "Academic", "area": 299024.0, "cost": 2580000000.0, "committed": 1000000000.0, "received": null, "status": "Active", "pct": 0.9856362985502058, "progress": "Stage2-Design", "target": "2027-12-01", "start": "2026", "donor": "Anonymous  (100 Cr) (AB4)", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "AB4 & GESH Building", "wbs": "", "category": "Academic", "area": null, "cost": null, "committed": null, "received": 199456320.0, "status": "Active", "pct": 0.9856362985502058, "progress": "Stage2-Design", "target": "2027-12-01", "start": "2026", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Efficiency Appt", "wbs": "", "category": "Non-academic", "area": 502675.0, "cost": 2260000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": null, "progress": "Stage2-Design", "target": null, "start": null, "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Hostel 9", "wbs": "DO/2025-HCT9", "category": "Student Housing", "area": 322917.0, "cost": 1650000000.0, "committed": 643293750.0, "received": 0.0, "status": "Active", "pct": 0.0, "progress": "Stage2-Design", "target": "2028-03-01", "start": "2026-06-01", "donor": "Jitendra Mohan & Swapna (64Cr)", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Hostel 6", "wbs": "DO/2024-HCT6", "category": "Student Housing", "area": 423022.0, "cost": 1800000000.0, "committed": 950000000.0, "received": 9700000.0, "status": "Active", "pct": 0.0, "progress": "Stage1-Planning", "target": "2028-03-01", "start": "2026-06-01", "donor": "Browserstack, Ritesh & Nakul (90 Cr)", "blocks": "", "floors": "", "beds": "", "permits": "link", "mous": "", "features": "Yoga room, Gymnasium, Dance/music room, Cafeteria/Canteen, Student Lounge", "priority": "", "updated": "2026-01-12"}, {"name": "Girls Hostel", "wbs": "", "category": "Student Housing", "area": 51451.0, "cost": 1600000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": 0.8200913242009132, "progress": "Stage1-Planning", "target": "2026-09-12", "start": "2023-09-13", "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Lecture Hall Complex  (OAT)", "wbs": "", "category": "Academic", "area": 129898.0, "cost": 1200000000.0, "committed": 416450000.0, "received": 340700000.0, "status": "Active", "pct": null, "progress": "Stage1-Planning", "target": null, "start": null, "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "ARL", "wbs": "", "category": "Academic", "area": 112742.0, "cost": 1700000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": 0.9883340063714273, "progress": "Stage1-Planning", "target": "2027-08-01", "start": "2026", "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "EHV", "wbs": "", "category": "Non-academic", "area": 38750.0, "cost": 1270000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": null, "progress": "Stage1-Planning", "target": null, "start": null, "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "MLCP", "wbs": "", "category": "Non-academic", "area": 215200.0, "cost": 1400000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": null, "progress": "Stage1-Planning", "target": null, "start": null, "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Drone Centre", "wbs": "", "category": "Academic", "area": 32280.0, "cost": 1000000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": 1.0, "progress": "Stage1-Planning", "target": "2027", "start": "2026", "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": "2026-01-12"}, {"name": "Hostel 19", "wbs": "", "category": "Student Housing", "area": 360791.519, "cost": 1000000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": "2025-12-01", "start": "2023", "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Hostel  11", "wbs": "", "category": "Student Housing", "area": 51432.8, "cost": 1600000000.0, "committed": 0.0, "received": null, "status": "Active", "pct": null, "progress": "Stage1-Planning", "target": "2028", "start": "2026-12-01", "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Gogri Hub", "wbs": "", "category": "Lab", "area": null, "cost": 75000000.0, "committed": 75000000.0, "received": 36269867.0, "status": "Active", "pct": 1.0, "progress": "Stage3-Under Construction", "target": "2026-01-01", "start": "2025-10-01", "donor": "Open", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "BASKETBALL COURT ARINA-CLASS OF 95", "wbs": "", "category": "Student Housing", "area": null, "cost": 66000000.0, "committed": 66000000.0, "received": 66000000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "NAMING TO CLASS OF 1993", "wbs": "", "category": "Academic", "area": null, "cost": 14000000.0, "committed": 14000000.0, "received": 14000000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "SHRIDHAR SHUKLA IITB TRUST LAB", "wbs": "", "category": "Academic", "area": null, "cost": 37500000.0, "committed": 37500000.0, "received": 37500000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Naming R.NO.21 VMCC PROF.VASI", "wbs": "", "category": "Academic", "area": null, "cost": 9000000.0, "committed": 9000000.0, "received": 9000000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Naming corpus of HE_IITB Y1,Y2", "wbs": "", "category": "Academic", "area": null, "cost": 20000000.0, "committed": 20000000.0, "received": 10800000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "INOX", "wbs": "", "category": "Other", "area": null, "cost": 7500000.0, "committed": 7500000.0, "received": 6750000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Kishore Seendripu-Lecture Hall Complex 3", "wbs": "", "category": "Academic", "area": null, "cost": 416450000.0, "committed": 416450000.0, "received": 340700000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "EE Dept. 2nd Floor- Arun Firodia", "wbs": "", "category": "Academic", "area": null, "cost": 75000000.0, "committed": 75000000.0, "received": 17460000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Citadel Securities", "wbs": "", "category": "Academic", "area": null, "cost": 20000000.0, "committed": 20000000.0, "received": 16000000.0, "status": "Active", "pct": null, "progress": "Stage1-Planning", "target": null, "start": "2024-03-01", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Surendra & Karen Gupta LT 105", "wbs": "", "category": "Other", "area": null, "cost": 17568600.0, "committed": 17568600.0, "received": 18474100.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Optiver", "wbs": "", "category": "Lab", "area": null, "cost": 15000000.0, "committed": 15000000.0, "received": 7500000.0, "status": "Active", "pct": null, "progress": "Stage1-Planning", "target": null, "start": "2025-09-01", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Groww", "wbs": "", "category": "Lab", "area": null, "cost": 120000000.0, "committed": 120000000.0, "received": 18000000.0, "status": "Active", "pct": null, "progress": "Stage5-Completed", "target": null, "start": "2025-10-01", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Mphasis", "wbs": "", "category": "Lab", "area": null, "cost": 12000000.0, "committed": 12000000.0, "received": 4000000.0, "status": "Active", "pct": null, "progress": "Stage3-Under Construction", "target": null, "start": "2025-10-01", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Bank of America", "wbs": "", "category": "Lab", "area": null, "cost": 15000000.0, "committed": 15000000.0, "received": 1600000.0, "status": "Active", "pct": null, "progress": "Stage3-Under Construction", "target": null, "start": "2025-11-01", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "Pramod Chaudhari Dining Hall", "wbs": "", "category": "Student Housing", "area": null, "cost": 175000000.0, "committed": 175000000.0, "received": 169750000.0, "status": "Active", "pct": null, "progress": "", "target": null, "start": null, "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}, {"name": "HRT", "wbs": "", "category": "Academic", "area": null, "cost": 15000000.0, "committed": 15000000.0, "received": 5000000.0, "status": "Active", "pct": null, "progress": "Stage1-Planning", "target": null, "start": "2026-08-01", "donor": "", "blocks": "", "floors": "", "beds": "", "permits": "", "mous": "", "features": "", "priority": "", "updated": null}];
+
+// ═══════════════════════════════════════════════════════════════
+//  COLOURS
+// ═══════════════════════════════════════════════════════════════
+const CAT_COL = {
+  "Academic":"#4f7aff","Student Housing":"#34d399","Research":"#a78bfa",
+  "Non-academic":"#fbbf24","Lab":"#22d3ee","Other":"#6b7280","":" #6b7280"
+};
+const STAGE_COL = {
+  "Planning":"#4f7aff","Design":"#a78bfa","Construction":"#34d399",
+  "Completed":"#22d3ee","Unknown":"#6b7280"
+};
+const catClr = c => CAT_COL[(c||"").trim()] || "#6b7280";
+const stageKey = s => {
+  if(!s) return "Unknown";
+  if(s.includes("Planning")) return "Planning";
+  if(s.includes("Design")) return "Design";
+  if(s.includes("Construction")) return "Construction";
+  if(s.includes("Completed")||s.includes("Stage5")||s.includes("Stage8")) return "Completed";
+  return "Unknown";
+};
+const stageClr = s => STAGE_COL[stageKey(s)] || "#6b7280";
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+const cr  = v => v ? v/1e7 : 0;
+const fmtCr = v => v&&v>0 ? "₹"+cr(v).toFixed(0)+" Cr" : "—";
+const fmtCrD = v => v&&v>0 ? cr(v).toFixed(1) : null;
+const fmtArea = v => !v||isNaN(v) ? "—" : v>=1e6 ? (v/1e6).toFixed(2)+"M" : Math.round(v).toLocaleString("en-IN");
+const fmtDate = v => {
+  if(!v) return "—";
+  try{ const d=new Date(v); if(!isNaN(d)) return d.toLocaleDateString("en-IN",{month:"short",year:"numeric"}); }catch(e){}
+  return String(v).slice(0,7);
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  CSV PARSER
+// ═══════════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  if(lines.length < 2) return [];
+  const parseRow = row => {
+    const cols=[]; let cur="",inQ=false;
+    for(let i=0;i<row.length;i++){
+      if(row[i]==='"'&&!inQ){inQ=true;}
+      else if(row[i]==='"'&&inQ&&row[i+1]==='"'){cur+='"';i++;}
+      else if(row[i]==='"'&&inQ){inQ=false;}
+      else if(row[i]===','&&!inQ){cols.push(cur.trim());cur="";}
+      else{cur+=row[i];}
+    }
+    cols.push(cur.trim()); return cols;
+  };
+  const headers = parseRow(lines[0]);
+  const idx = h => headers.findIndex(c=>c.trim()===h);
+  const iN=idx("Project Name"),iWBS=idx("WBS Code"),iCat=idx("Category"),
+    iArea=idx("Built-up Area (sq ft)"),iCost=idx("Project Cost"),
+    iComm=idx("Funds Committed for Infra"),iRecv=idx("Received Funds- After  admin  cost"),
+    iStat=idx("Status"),iPct=idx("% Completion"),iProg=idx("Progress"),
+    iTgt=idx("Target Completion"),iStart=idx("Start Date"),
+    iDonor=idx("Donor Name"),iBlocks=idx("Blocks/Impediments and Redflag"),
+    iFloors=idx("Floors"),iBeds=idx("No. of Beds/ Occupency, and other details"),
+    iPermits=idx("Permits"),iMOUs=idx("MOUs"),iFeatures=idx("Special Features"),
+    iPriority=idx("Priority"),iUpdated=idx("Last Updated");
+  const num = v => {
+    if(!v||v==="") return null;
+    const n=parseFloat(String(v).replace(/,/g,"").replace(/[^0-9.\-]/g,""));
+    return isFinite(n)&&n>=0?n:null;
+  };
+  const clean = v => (!v||v==="nan"||v==="None")?"":String(v).trim().replace(/\n/g," · ");
+  return lines.slice(1).map(l=>parseRow(l))
+    .filter(c=>c[iN]&&c[iN].trim()&&(c[iProg]||c[iStat]||c[iCost]||c[iPct]))
+    .map(c=>({
+      name:c[iN].trim(), wbs:clean(c[iWBS]), category:clean(c[iCat])||"Other",
+      area:num(c[iArea]), cost:num(c[iCost]), committed:num(c[iComm]), received:num(c[iRecv]),
+      status:clean(c[iStat])||"Active", pct:num(c[iPct]), progress:clean(c[iProg]),
+      target:clean(c[iTgt]), start:clean(c[iStart]), donor:clean(c[iDonor]),
+      blocks:clean(c[iBlocks]), floors:clean(c[iFloors]), beds:clean(c[iBeds]),
+      permits:clean(c[iPermits]), mous:clean(c[iMOUs]), features:clean(c[iFeatures]),
+      priority:clean(c[iPriority]), updated:clean(c[iUpdated])
+    }));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DONUT HELPER
+// ═══════════════════════════════════════════════════════════════
+function buildDonut(svgId, numId, legendId, data) {
+  const svg = document.getElementById(svgId);
+  const total = data.reduce((s,d)=>s+d.count,0);
+  document.getElementById(numId).textContent = total;
+  svg.querySelectorAll(".seg").forEach(e=>e.remove());
+  const circ=2*Math.PI*50; let off=0;
+  data.forEach(d=>{
+    const arc=d.count/total*circ;
+    const el=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    el.setAttribute("class","seg");el.setAttribute("cx","70");el.setAttribute("cy","70");
+    el.setAttribute("r","50");el.setAttribute("fill","none");el.setAttribute("stroke",d.color);
+    el.setAttribute("stroke-width","22");
+    el.setAttribute("stroke-dasharray",`${arc} ${circ}`);
+    el.setAttribute("stroke-dashoffset",-off);
+    el.setAttribute("transform","rotate(-90 70 70)");
+    svg.insertBefore(el,svg.querySelector("text"));
+    off+=arc;
+  });
+  document.getElementById(legendId).innerHTML = data.map(d=>`
+    <div class="legend-row">
+      <div class="legend-dot" style="background:${d.color}"></div>
+      <span class="legend-name">${d.label}</span>
+      <span class="legend-val">${d.count} <span style="color:var(--muted);font-weight:400">(${Math.round(d.count/total*100)}%)</span></span>
+    </div>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════════
+let ALL = [], apCurrentFilter = "all";
+
+function render(P) {
+  ALL = P;
+  const active = P.filter(p=>p.status==="Active");
+  const totalCost = P.reduce((s,p)=>s+(p.cost||0),0);
+  const totalComm = P.reduce((s,p)=>s+(p.committed||0),0);
+  const totalRecv = P.reduce((s,p)=>s+(p.received||0),0);
+  const gap = Math.max(0,totalCost-totalComm);
+  const pctComm = totalCost>0?(totalComm/totalCost*100):0;
+  const totalArea = P.reduce((s,p)=>s+(p.area||0),0);
+  const comp = P.filter(p=>p.progress&&(p.progress.includes("Completed")||p.progress.includes("Stage5")||p.progress.includes("Stage8")));
+  const withPct = P.filter(p=>p.pct!==null&&!isNaN(p.pct));
+  const avgPct = withPct.length?(withPct.reduce((s,p)=>s+p.pct,0)/withPct.length*100):0;
+  const priority = P.filter(p=>p.priority&&p.priority.toLowerCase().includes("high"));
+  const blocked = P.filter(p=>p.blocks&&p.blocks.trim());
+
+  // ── OVERVIEW KPIs ──
+  document.getElementById("ov-k1").textContent = P.length;
+  document.getElementById("ov-k1s").innerHTML = `<b>${active.length}</b> Active · ${P.length-active.length} Non-Active`;
+  document.getElementById("ov-k2").textContent = fmtCr(totalCost);
+  document.getElementById("ov-k2s").textContent = "Across all projects";
+  document.getElementById("ov-k3").textContent = fmtCr(totalComm);
+  document.getElementById("ov-k3s").innerHTML = `<b>${pctComm.toFixed(1)}%</b> of total estimated`;
+  document.getElementById("ov-k4").textContent = fmtCr(gap);
+  document.getElementById("ov-k4s").textContent = `${(100-pctComm).toFixed(1)}% yet to be raised`;
+  document.getElementById("ov-k5").textContent = fmtArea(totalArea)+" sq ft";
+  document.getElementById("ov-k5s").textContent = `${P.filter(p=>p.area).length} buildings`;
+  document.getElementById("ov-k6").textContent = comp.length+" projects";
+  document.getElementById("ov-k7").textContent = avgPct.toFixed(1)+"%";
+  document.getElementById("ov-k7s").textContent = `${withPct.length} projects with data`;
+
+  // ── OVERVIEW FINANCE BARS ──
+  const catData = {};
+  P.forEach(p=>{
+    const c=(p.category||"Other").trim()||"Other";
+    if(!catData[c]) catData[c]={cost:0,committed:0,count:0};
+    catData[c].cost+=(p.cost||0); catData[c].committed+=(p.committed||0); catData[c].count++;
+  });
+  const maxCost = Math.max(...Object.values(catData).map(d=>d.cost));
+  document.getElementById("ov-finance-bars").innerHTML = Object.entries(catData)
+    .filter(([,d])=>d.cost>0).sort((a,b)=>b[1].cost-a[1].cost)
+    .map(([cat,d])=>{
+      const col=catClr(cat);
+      const commPct=d.cost>0?Math.min(100,d.committed/d.cost*100):0;
+      return `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;margin-bottom:5px">
+          <span style="font-weight:600;color:${col}">${cat} <span style="color:var(--muted);font-weight:400">(${d.count})</span></span>
+          <span style="color:var(--muted)">₹${cr(d.cost).toFixed(0)}Cr &nbsp;<span style="color:var(--green)">₹${cr(d.committed).toFixed(0)}Cr raised</span></span>
+        </div>
+        <div style="height:8px;background:var(--surface3);border-radius:99px;overflow:hidden;position:relative">
+          <div style="height:100%;width:${d.cost/maxCost*100}%;background:${col}20;position:absolute;border-radius:99px"></div>
+          <div style="height:100%;width:${commPct/100*d.cost/maxCost*100}%;background:${col};position:absolute;border-radius:99px"></div>
+        </div>
+        <div style="font-size:.61rem;color:var(--muted);margin-top:3px">Gap: ₹${cr(Math.max(0,d.cost-d.committed)).toFixed(0)}Cr &nbsp;·&nbsp; ${commPct.toFixed(0)}% funded</div>
+      </div>`;
+    }).join("");
+
+  // ── OVERVIEW STAGE BARS ──
+  const stages={};
+  P.forEach(p=>{const s=stageKey(p.progress);stages[s]=(stages[s]||0)+1;});
+  const maxS=Math.max(...Object.values(stages));
+  document.getElementById("ov-stage-bars").innerHTML = Object.entries(stages)
+    .sort((a,b)=>b[1]-a[1]).map(([s,n])=>`
+    <div class="bar-row">
+      <div class="bar-name">${s}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${n/maxS*100}%;background:${STAGE_COL[s]||"#6b7280"}"></div></div>
+      <div class="bar-val" style="color:${STAGE_COL[s]||"#6b7280"}">${n}</div>
+    </div>`).join("");
+
+  // ── OVERVIEW CAT COMPLETION ──
+  const catComp={};
+  Object.keys(catData).forEach(cat=>{
+    const ps=P.filter(p=>(p.category||"Other").trim()===cat&&p.pct!==null&&!isNaN(p.pct));
+    if(ps.length) catComp[cat]=ps.reduce((s,p)=>s+p.pct,0)/ps.length*100;
+  });
+  document.getElementById("ov-cat-completion").innerHTML = Object.entries(catComp)
+    .sort((a,b)=>b[1]-a[1]).map(([cat,pct])=>{
+      const col=catClr(cat);
+      return `<div class="bar-row">
+        <div class="bar-name">${cat}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="bar-val" style="color:${col}">${pct.toFixed(0)}%</div>
+      </div>`;
+    }).join("");
+
+  // ── OVERVIEW PRIORITY STRIP ──
+  const strips = [];
+  if(priority.length) strips.push(`<div class="card" style="border-left:3px solid var(--red);margin-bottom:20px">
+    <div class="card-head"><div><div class="card-title" style="color:var(--red)">🔴 High Priority Projects (${priority.length})</div><div class="card-sub">Click "Top Priority" tab for full details</div></div></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${priority.map(p=>`
+      <div style="background:var(--red-dim);border:1px solid rgba(248,113,113,.15);border-radius:var(--radius-sm);padding:8px 12px;min-width:200px;flex:1">
+        <div style="font-size:.75rem;font-weight:700;color:var(--text);margin-bottom:3px">${p.name}</div>
+        <div style="font-size:.63rem;color:var(--muted)">${p.progress||"—"} &nbsp;·&nbsp; ${p.pct!==null?Math.round(p.pct*100)+"% complete":"—"}</div>
+        ${p.blocks?`<div style="font-size:.63rem;color:var(--red);margin-top:4px">⚠ ${p.blocks.length>60?p.blocks.slice(0,60)+"…":p.blocks}</div>`:""}
+      </div>`).join("")}</div>
+  </div>`);
+  if(blocked.length) strips.push(`<div class="card" style="border-left:3px solid var(--amber);margin-bottom:20px">
+    <div class="card-head"><div><div class="card-title" style="color:var(--amber)">⚠ Blocks &amp; Impediments (${blocked.length})</div><div class="card-sub">Projects with reported issues</div></div></div>
+    <div style="display:flex;flex-direction:column;gap:8px">${blocked.map(p=>`
+      <div class="priority-blocks"><span style="font-weight:700;color:var(--text);white-space:nowrap">${p.name}:</span> ${p.blocks}</div>`).join("")}</div>
+  </div>`);
+  document.getElementById("ov-priority-strip").innerHTML = strips.join("") || `<div class="card" style="border-left:3px solid var(--green);margin-bottom:20px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:1.2rem">✅</span>
+    <div><div style="font-size:.8rem;font-weight:600;color:var(--green)">No blocks or high-priority alerts</div>
+    <div style="font-size:.67rem;color:var(--muted)">All projects are running normally. Add a <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">Priority</code> column in your Google Sheet to flag high-priority projects.</div></div>
+  </div>`;
+
+  // ── PRIORITY TAB ──
+  document.getElementById("priorityCnt").textContent = priority.length;
+  if(!priority.length) {
+    document.getElementById("priority-empty").style.display="block";
+    document.getElementById("priority-list").innerHTML="";
+  } else {
+    document.getElementById("priority-empty").style.display="none";
+    document.getElementById("priority-list").innerHTML = priority.map(p=>{
+      const commPct=p.cost>0?Math.min(100,((p.committed||0)/p.cost*100)):0;
+      const sk=stageKey(p.progress);
+      return `<div class="priority-card">
+        <div class="priority-card-top">
+          <div>
+            <div class="priority-card-name">${p.name}</div>
+            <div class="priority-card-meta">
+              <span style="color:${catClr(p.category)};font-weight:600">${p.category}</span>
+              ${p.wbs?`<span class="td-mono">${p.wbs}</span>`:""}
+              <span>Target: ${fmtDate(p.target)}</span>
+              ${p.updated?`<span>Updated: ${fmtDate(p.updated)}</span>`:""}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
+            <span class="pill pill-red">🔴 High Priority</span>
+            <span class="pill ${p.status==="Active"?"pill-green":"pill-muted"}">${p.status}</span>
+            <span class="pill pill-blue" style="background:${STAGE_COL[sk]}20;color:${STAGE_COL[sk]}">${p.progress||"—"}</span>
+          </div>
+        </div>
+        <div class="priority-card-body">
+          <div class="pstat"><div class="pstat-label">Est. Cost</div><div class="pstat-val" style="color:var(--accent)">${fmtCr(p.cost)}</div></div>
+          <div class="pstat"><div class="pstat-label">Committed</div><div class="pstat-val" style="color:var(--green)">${fmtCr(p.committed)}</div></div>
+          <div class="pstat"><div class="pstat-label">Funding Gap</div><div class="pstat-val" style="color:var(--red)">${fmtCr(Math.max(0,(p.cost||0)-(p.committed||0)))}</div></div>
+          <div class="pstat"><div class="pstat-label">% Complete</div><div class="pstat-val" style="color:var(--amber)">${p.pct!==null?Math.round(p.pct*100)+"%":"—"}</div></div>
+        </div>
+        ${p.pct!==null?`<div style="margin-bottom:10px">
+          <div style="font-size:.62rem;color:var(--muted);margin-bottom:4px">CONSTRUCTION PROGRESS</div>
+          <div class="prog-wrap">
+            <div class="prog-track" style="height:8px"><div class="prog-fill" style="width:${Math.min(100,p.pct*100)}%;background:${stageClr(p.progress)}"></div></div>
+            <div class="prog-label" style="color:${stageClr(p.progress)}">${Math.round(p.pct*100)}%</div>
+          </div>
+        </div>`:""}
+        ${p.cost>0?`<div style="margin-bottom:10px">
+          <div style="font-size:.62rem;color:var(--muted);margin-bottom:4px">FUNDRAISING PROGRESS — ${commPct.toFixed(0)}% of ₹${cr(p.cost).toFixed(0)}Cr</div>
+          <div class="prog-wrap">
+            <div class="prog-track" style="height:8px"><div class="prog-fill" style="width:${commPct}%;background:var(--green)"></div></div>
+            <div class="prog-label" style="color:var(--green)">${fmtCr(p.committed)}</div>
+          </div>
+        </div>`:""}
+        ${p.donor?`<div style="margin-bottom:8px;font-size:.72rem;color:var(--muted2)">👤 <strong style="color:var(--text)">Donor:</strong> ${p.donor}</div>`:""}
+        ${p.blocks?`<div class="priority-blocks">⚠ <div><strong>Block/Impediment:</strong> ${p.blocks}</div></div>`:""}
+        ${p.beds||p.features?`<div style="font-size:.7rem;color:var(--muted2);margin-top:8px">${p.beds?`🛏 ${p.beds} ·`:""} ${p.features||""}</div>`:""}
+      </div>`;
+    }).join("");
+  }
+
+  // ── FINANCES KPIs ──
+  document.getElementById("fin-k1").textContent = fmtCr(totalCost);
+  document.getElementById("fin-k1s").textContent = `${P.filter(p=>p.cost>0).length} projects with cost data`;
+  document.getElementById("fin-k2").textContent = fmtCr(totalComm);
+  document.getElementById("fin-k2s").innerHTML = `<b>${pctComm.toFixed(1)}%</b> of total estimated cost`;
+  document.getElementById("fin-k3").textContent = fmtCr(totalRecv);
+  document.getElementById("fin-k3s").textContent = `${totalComm>0?(totalRecv/totalComm*100).toFixed(0):"0"}% of committed`;
+  document.getElementById("fin-k4").textContent = fmtCr(gap);
+  document.getElementById("fin-k4s").textContent = `${P.filter(p=>(p.cost||0)-(p.committed||0)>1e7).length} projects with gaps`;
+
+  // ── FINANCES CAT BARS ──
+  document.getElementById("fin-cat-bars").innerHTML = Object.entries(catData)
+    .filter(([,d])=>d.cost>0).sort((a,b)=>b[1].cost-a[1].cost)
+    .map(([cat,d])=>{
+      const col=catClr(cat);
+      const commPct=d.cost>0?Math.min(100,d.committed/d.cost*100):0;
+      const gapPct=100-commPct;
+      const areaTotal=P.filter(p=>p.category===cat).reduce((s,p)=>s+(p.area||0),0);
+      return `<div class="grouped-bar">
+        <div class="grouped-bar-label">
+          <span style="color:${col}">${cat} <span style="color:var(--muted);font-weight:400;font-size:.65rem">${d.count} projects</span></span>
+          <span style="font-size:.65rem;color:var(--muted)">Area: ${fmtArea(areaTotal)} sq ft</span>
+        </div>
+        <div class="grouped-bar-tracks">
+          <div class="grouped-bar-row">
+            <div class="grouped-bar-key">Est. Cost</div>
+            <div class="grouped-bar-track"><div class="grouped-bar-fill" style="width:${d.cost/maxCost*100}%;background:${col}40"></div></div>
+            <div class="grouped-bar-num" style="color:var(--muted2)">₹${cr(d.cost).toFixed(0)}Cr</div>
+          </div>
+          <div class="grouped-bar-row">
+            <div class="grouped-bar-key">Committed</div>
+            <div class="grouped-bar-track"><div class="grouped-bar-fill" style="width:${commPct/100*d.cost/maxCost*100}%;background:${col}"></div></div>
+            <div class="grouped-bar-num" style="color:${col}">₹${cr(d.committed).toFixed(0)}Cr</div>
+          </div>
+          <div class="grouped-bar-row">
+            <div class="grouped-bar-key">Gap</div>
+            <div class="grouped-bar-track"><div class="grouped-bar-fill" style="width:${gapPct/100*d.cost/maxCost*100}%;background:var(--red);opacity:.5"></div></div>
+            <div class="grouped-bar-num td-red">₹${cr(Math.max(0,d.cost-d.committed)).toFixed(0)}Cr</div>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+  // ── FINANCES DUAL BARS (funded only) ──
+  const funded=[...P].filter(p=>p.cost>0&&p.committed>0).sort((a,b)=>(b.cost||0)-(a.cost||0)).slice(0,10);
+  const maxFCost=funded.reduce((m,p)=>Math.max(m,p.cost||0),0);
+  document.getElementById("fin-dual-bars").innerHTML = funded.map(p=>{
+    const col=catClr(p.category);
+    const commPct=p.cost>0?Math.min(100,(p.committed||0)/p.cost*100):0;
+    return `<div class="dual-bar">
+      <div class="dual-bar-header">
+        <span class="dual-bar-name" title="${p.name}">${p.name}</span>
+        <span class="dual-bar-nums">₹${fmtCrD(p.committed)||"0"} / ₹${fmtCrD(p.cost)||"—"} Cr &nbsp;<span style="color:${col};font-weight:600">${commPct.toFixed(0)}%</span></span>
+      </div>
+      <div class="dual-track" style="height:7px">
+        <div style="position:absolute;height:100%;width:${(p.cost||0)/maxFCost*100}%;background:var(--red);opacity:.2;border-radius:99px"></div>
+        <div class="dual-committed" style="width:${commPct/100*(p.cost||0)/maxFCost*100}%;background:${col}"></div>
+      </div>
+      ${p.donor?`<div class="donor-note">👤 ${p.donor.length>60?p.donor.slice(0,60)+"…":p.donor}</div>`:""}
+    </div>`;
+  }).join("");
+
+  // ── FINANCES PIPELINE ──
+  const unfunded=P.filter(p=>!p.committed||p.committed===0);
+  document.getElementById("fin-pipeline").innerHTML = unfunded.map(p=>`
+    <div class="pipeline-item">
+      <div class="pipeline-name">${p.name}</div>
+      <div class="pipeline-meta"><span style="color:${catClr(p.category)};font-weight:600">${p.category}</span><span>${p.progress||"—"}</span></div>
+      <div class="pipeline-cost">${p.cost&&p.cost>0?"₹"+fmtCrD(p.cost)+"Cr needed":"Cost TBD"}</div>
+    </div>`).join("");
+
+  // ── FINANCES FULL TABLE ──
+  document.getElementById("fin-table-body").innerHTML=[...P].filter(p=>p.cost>0).sort((a,b)=>(b.cost||0)-(a.cost||0)).map(p=>{
+    const g=Math.max(0,(p.cost||0)-(p.committed||0));
+    const pf=p.cost>0?Math.round((p.committed||0)/p.cost*100):0;
+    const col=catClr(p.category);
+    return `<tr>
+      <td><div class="td-name">${p.name}</div></td>
+      <td><span class="tag" style="background:${col}20;color:${col}">${p.category}</span></td>
+      <td class="td-green">₹${fmtCrD(p.cost)||"—"}</td>
+      <td style="color:var(--accent);font-weight:600">${fmtCrD(p.committed)?`₹${fmtCrD(p.committed)}`:"—"}</td>
+      <td class="td-amber">${fmtCrD(p.received)?`₹${fmtCrD(p.received)}`:"—"}</td>
+      <td class="${g>0?"td-red":"td-green"}">${g>0?"₹"+cr(g).toFixed(1):"Funded"}</td>
+      <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:${Math.min(pf,100)}%;background:${pf>=80?"var(--green)":pf>=40?"var(--accent)":"var(--amber)"}"></div></div><span class="prog-label">${pf}%</span></div></td>
+      <td class="td-muted" style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.donor||""}">${p.donor||"—"}</td>
+    </tr>`;
+  }).join("");
+
+  // ── LOGISTICS KPIs ──
+  const underCon=P.filter(p=>p.progress&&p.progress.includes("Construction")).length;
+  const designPlan=P.filter(p=>p.progress&&(p.progress.includes("Design")||p.progress.includes("Planning"))).length;
+  document.getElementById("log-k1").textContent = fmtArea(totalArea)+" sq ft";
+  document.getElementById("log-k1s").textContent = `${P.filter(p=>p.area).length} buildings`;
+  document.getElementById("log-k2").textContent = underCon+" projects";
+  document.getElementById("log-k3").textContent = designPlan+" projects";
+  document.getElementById("log-k4").textContent = blocked.length+" projects";
+
+  // ── LOGISTICS AREA BY CATEGORY ──
+  const catArea={};
+  P.forEach(p=>{const c=p.category||"Other";catArea[c]=(catArea[c]||0)+(p.area||0);});
+  const maxCA=Math.max(...Object.values(catArea));
+  document.getElementById("log-area-cat").innerHTML=Object.entries(catArea).sort((a,b)=>b[1]-a[1]).map(([cat,area])=>{
+    const col=catClr(cat);
+    return `<div class="bar-row">
+      <div class="bar-name">${cat}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${area/maxCA*100}%;background:${col}"></div></div>
+      <div class="bar-val" style="color:${col}">${fmtArea(area)}</div>
+    </div>`;
+  }).join("");
+
+  // ── LOGISTICS COMPLETION BY PROJECT ──
+  const sortedPct=[...P].filter(p=>p.pct!==null&&!isNaN(p.pct)).sort((a,b)=>b.pct-a.pct).slice(0,15);
+  const cols=["var(--green)","var(--accent)","var(--amber)","var(--red)"];
+  document.getElementById("log-completion-bars").innerHTML=sortedPct.map(p=>{
+    const v=Math.round(p.pct*100);
+    const col=v>=80?"var(--green)":v>=50?"var(--accent)":v>=25?"var(--amber)":"var(--red)";
+    return `<div class="bar-row">
+      <div class="bar-name" title="${p.name}">${p.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${v}%;background:${col}"></div></div>
+      <div class="bar-val" style="color:${col}">${v}%</div>
+    </div>`;
+  }).join("");
+
+  // ── LOGISTICS STAGE DONUT ──
+  const stageGroups={};
+  P.forEach(p=>{const s=stageKey(p.progress);stageGroups[s]=(stageGroups[s]||0)+1;});
+  buildDonut("log-donut-svg","log-donut-num","log-donut-legend",
+    Object.entries(stageGroups).map(([k,n])=>({label:k,count:n,color:STAGE_COL[k]||"#6b7280"})).sort((a,b)=>b.count-a.count));
+
+  // ── LOGISTICS AREA BY PROJECT ──
+  const sortedArea=[...P].filter(p=>p.area>0).sort((a,b)=>b.area-a.area).slice(0,12);
+  const maxAP=sortedArea[0]?.area||1;
+  document.getElementById("log-area-proj").innerHTML=sortedArea.map(p=>{
+    const col=catClr(p.category);
+    return `<div class="bar-row">
+      <div class="bar-name" title="${p.name}">${p.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${p.area/maxAP*100}%;background:${col}"></div></div>
+      <div class="bar-val" style="color:${col}">${fmtArea(p.area)}</div>
+    </div>`;
+  }).join("");
+
+  // ── LOGISTICS TABLE ──
+  document.getElementById("log-table-body").innerHTML=P.map(p=>{
+    const pctV=p.pct!==null&&!isNaN(p.pct)?Math.round(p.pct*100):null;
+    const col=catClr(p.category); const sc=stageClr(p.progress);
+    return `<tr>
+      <td><div class="td-name">${p.name}</div></td>
+      <td><span class="tag" style="background:${col}20;color:${col}">${p.category}</span></td>
+      <td><span class="tag" style="background:${sc}20;color:${sc}">${p.progress||"—"}</span></td>
+      <td>${pctV!==null?`<div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:${Math.min(pctV,100)}%;background:${sc}"></div></div><span class="prog-label" style="color:${sc}">${pctV}%</span></div>`:"—"}</td>
+      <td class="td-muted">${fmtArea(p.area)}</td>
+      <td class="td-muted">${p.floors||"—"}</td>
+      <td class="td-muted">${fmtDate(p.start)}</td>
+      <td class="td-muted">${fmtDate(p.target)}</td>
+      <td>${p.blocks?`<span class="pill pill-amber" style="font-size:.6rem">⚠ ${p.blocks.length>30?p.blocks.slice(0,30)+"…":p.blocks}</span>`:`<span class="td-muted">—</span>`}</td>
+      <td><span class="pill ${p.status==="Active"?"pill-green":"pill-muted"}">${p.status==="Active"?"● Active":"○ "+p.status}</span></td>
+    </tr>`;
+  }).join("");
+
+  // ── ALL PROJECTS TABLE ──
+  apFilter(apCurrentFilter, null);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ALL PROJECTS FILTER
+// ═══════════════════════════════════════════════════════════════
+function apFilter(filter, btn) {
+  apCurrentFilter = filter;
+  document.querySelectorAll("#ap-filters .btn").forEach(b=>{
+    b.style.background="var(--surface2)"; b.style.borderColor="var(--border2)"; b.style.color="var(--text)";
+  });
+  const activeBtn = btn || document.getElementById({
+    "all":"apf-all","Academic":"apf-Academic","Student Housing":"apf-Housing",
+    "Research":"apf-Research","Non-academic":"apf-NonAcademic","Lab":"apf-Lab"
+  }[filter]);
+  if(activeBtn){activeBtn.style.background="var(--accent)";activeBtn.style.borderColor="var(--accent)";activeBtn.style.color="#fff";}
+  const data = filter==="all" ? ALL : ALL.filter(p=>(p.category||"").trim()===filter);
+  document.getElementById("ap-count").textContent = `${data.length} projects`;
+  document.getElementById("ap-table-body").innerHTML = data.map(p=>{
+    const col=catClr(p.category); const sc=stageClr(p.progress);
+    const g=Math.max(0,(p.cost||0)-(p.committed||0));
+    const pctV=p.pct!==null&&!isNaN(p.pct)?Math.round(p.pct*100):null;
+    return `<tr>
+      <td class="td-mono">${p.wbs||"—"}</td>
+      <td><div class="td-name">${p.name}</div></td>
+      <td><span class="tag" style="background:${col}20;color:${col}">${p.category}</span></td>
+      <td>${p.priority&&p.priority.toLowerCase().includes("high")?`<span class="pill pill-red">🔴 High</span>`:`<span class="td-muted">—</span>`}</td>
+      <td><span class="tag" style="background:${sc}20;color:${sc}">${p.progress||"—"}</span></td>
+      <td>${pctV!==null?`<div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:${Math.min(pctV,100)}%;background:${sc}"></div></div><span class="prog-label">${pctV}%</span></div>`:"—"}</td>
+      <td class="td-green">${fmtCrD(p.cost)?`₹${fmtCrD(p.cost)}`:"—"}</td>
+      <td style="color:var(--accent);font-weight:600">${fmtCrD(p.committed)?`₹${fmtCrD(p.committed)}`:"—"}</td>
+      <td class="${g>0?"td-red":"td-green"}">${g>0?"₹"+cr(g).toFixed(1):"Funded"}</td>
+      <td class="td-muted">${fmtArea(p.area)}</td>
+      <td class="td-muted" style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.donor||""}">${p.donor||"—"}</td>
+      <td class="td-muted">${fmtDate(p.start)}</td>
+      <td class="td-muted">${fmtDate(p.target)}</td>
+      <td><span class="pill ${p.status==="Active"?"pill-green":"pill-muted"}">${p.status==="Active"?"● Active":"○ "+p.status}</span></td>
+      <td>${p.blocks?`<span class="pill pill-amber" style="font-size:.58rem">⚠ ${p.blocks.length>25?p.blocks.slice(0,25)+"…":p.blocks}</span>`:`<span class="td-muted">—</span>`}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════
+function switchTab(id, el) {
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("tab-"+id).classList.add("active");
+  el.classList.add("active");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SYNC UI
+// ═══════════════════════════════════════════════════════════════
+function setSyncUI(state, msg) {
+  const dot = document.getElementById("syncDot");
+  dot.className = "sync-dot " + state;
+  document.getElementById("syncText").textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOAD DATA
+// ═══════════════════════════════════════════════════════════════
+let refreshTimer = null;
+async function loadData() {
+  setSyncUI("loading", "Syncing…");
+  let ok = false;
+  try {
+    const r = await fetch(CSV_URL + "&t=" + Date.now());
+    if(r.ok) {
+      const text = await r.text();
+      let projects = [];
+      try { projects = parseCSV(text); } catch(e){ console.warn("Parse error",e); }
+      if(projects.length > 0) {
+        render(projects);
+        setSyncUI("live", "Live · Google Sheets · " + new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}));
+        document.getElementById("syncNotice").classList.remove("show");
+        ok = true;
+      }
+    }
+  } catch(e){ console.warn("Fetch failed",e.message); }
+  if(!ok) {
+    render(FALLBACK);
+    setSyncUI("error", "Cached · " + new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short"}));
+    document.getElementById("syncNotice").classList.add("show");
+  }
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(loadData, REFRESH_MS);
+}
+
+loadData();
+</script>
+</body>
+</html>
