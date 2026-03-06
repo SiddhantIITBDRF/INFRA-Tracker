@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>IIT Bombay · Dashboard Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f0f2f7;--surface:#fff;--s2:#f7f8fc;--s3:#eef0f6;
+  --border:#e3e7f0;--border2:#d0d5e8;
+  --text:#1a1f36;--text2:#3d4466;--muted:#8892b0;--muted2:#6b7494;
+  --blue:#2355f5;--blue-lt:#eef1fe;
+  --teal:#0d9e8a;--teal-lt:#e6f7f5;
+  --amber:#c47b00;--amber-lt:#fff8e6;
+  --rose:#d63b5a;--rose-lt:#fef0f3;--rose-md:#f7b8c4;
+  --green:#16a34a;--green-lt:#dcfce7;
+  --font:'Outfit',sans-serif;
+  --rad:10px;--rad-sm:6px;--rad-lg:14px;
+  --sh:0 1px 2px rgba(26,31,54,.05),0 3px 12px rgba(26,31,54,.06);
+  --sh-md:0 4px 20px rgba(26,31,54,.11);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh}
+
+/* LOCK SCREEN */
+#lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center}
+.lock-box{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rad-lg);padding:40px;width:360px;box-shadow:var(--sh-md);text-align:center}
+.lock-ico{font-size:2.5rem;margin-bottom:16px}
+.lock-title{font-size:1.15rem;font-weight:800;margin-bottom:6px}
+.lock-sub{font-size:.78rem;color:var(--muted);margin-bottom:24px}
+.lock-input{width:100%;padding:11px 14px;border:1.5px solid var(--border2);border-radius:var(--rad-sm);font-family:var(--font);font-size:.9rem;outline:none;transition:border .15s;margin-bottom:12px;text-align:center;letter-spacing:.15em}
+.lock-input:focus{border-color:var(--blue)}
+.lock-err{color:var(--rose);font-size:.74rem;margin-bottom:10px;display:none}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1.5px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,31,54,.04)}
+.hdr-l{display:flex;align-items:center;gap:14px}
+.hdr-badge{background:var(--rose);color:#fff;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:6px}
+.hdr-title{font-size:.95rem;font-weight:700}
+.hdr-title span{color:var(--muted);font-weight:400}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 58px)}
+.sidebar{background:var(--surface);border-right:1.5px solid var(--border);padding:20px 0}
+.sb-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:10px 20px 6px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:.8rem;font-weight:600;color:var(--muted2);cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.sb-item:hover{background:var(--s2);color:var(--text)}
+.sb-item.on{background:var(--blue-lt);color:var(--blue);border-left-color:var(--blue)}
+.sb-item .ico{font-size:1rem;width:20px;text-align:center}
+.content{padding:28px 32px;overflow-y:auto}
+
+/* SECTION */
+.sec{display:none}
+.sec.on{display:block}
+.sec-title{font-size:1.1rem;font-weight:800;margin-bottom:4px;letter-spacing:-.02em}
+.sec-sub{font-size:.76rem;color:var(--muted);margin-bottom:24px}
+
+/* CARD */
+.card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rad-lg);padding:22px 24px;box-shadow:var(--sh);margin-bottom:16px}
+.card-title{font-size:.85rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* FORM ELEMENTS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.form-row.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.field input,.field select,.field textarea{padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--rad-sm);font-family:var(--font);font-size:.82rem;outline:none;transition:border .15s;background:var(--surface);color:var(--text)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:70px}
+.field input[type="color"]{height:38px;padding:3px 6px;cursor:pointer}
+
+/* BUTTONS */
+.btn{padding:8px 18px;border-radius:var(--rad-sm);font-family:var(--font);font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--s3)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#1a44e0}
+.btn-danger{background:var(--rose-lt);color:var(--rose);border-color:var(--rose-md)}
+.btn-danger:hover{background:var(--rose);color:#fff}
+.btn-success{background:var(--green-lt);color:var(--green);border-color:#86efac}
+.btn-success:hover{background:var(--green);color:#fff}
+.btn-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1f36;color:#fff;padding:12px 20px;border-radius:var(--rad-sm);font-size:.78rem;font-weight:500;box-shadow:var(--sh-md);display:none;z-index:999;align-items:center;gap:10px}
+.toast.on{display:flex;animation:slideup .2s ease}
+@keyframes slideup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.toast.ok{background:var(--teal)}
+.toast.err{background:var(--rose)}
+
+/* PROJECT LIST */
+.proj-list{display:flex;flex-direction:column;gap:8px;max-height:480px;overflow-y:auto;padding-right:4px}
+.proj-item{background:var(--s2);border:1.5px solid var(--border);border-radius:var(--rad-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.proj-item:hover{border-color:var(--blue-lt);background:var(--blue-lt)}
+.proj-item.sel{border-color:var(--blue);background:var(--blue-lt)}
+.proj-cat{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.proj-name{flex:1;font-size:.8rem;font-weight:600}
+.proj-meta{font-size:.65rem;color:var(--muted)}
+.proj-pri{font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--rose-lt);color:var(--rose)}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{width:100%;padding:9px 12px 9px 36px;border:1.5px solid var(--border2);border-radius:var(--rad-sm);font-family:var(--font);font-size:.82rem;outline:none;transition:border .15s}
+.search-wrap input:focus{border-color:var(--blue)}
+.search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem}
+
+/* COLOUR SWATCHES */
+.swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.swatch{background:var(--s2);border:1.5px solid var(--border);border-radius:var(--rad-sm);padding:12px;display:flex;align-items:center;gap:10px;transition:border .15s}
+.swatch:hover{border-color:var(--blue-lt)}
+.swatch-dot{width:32px;height:32px;border-radius:8px;flex-shrink:0}
+.swatch-name{font-size:.77rem;font-weight:600}
+.swatch-hex{font-size:.65rem;color:var(--muted);font-family:monospace}
+
+/* DIFF BADGE */
+.diff{display:inline-block;background:var(--amber-lt);color:var(--amber);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px}
+
+/* EXPORT NOTICE */
+.export-box{background:var(--blue-lt);border:1.5px solid var(--blue-md);border-radius:var(--rad-sm);padding:16px 18px;font-size:.78rem;color:var(--blue);line-height:1.7}
+.export-box strong{font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock">
+  <div class="lock-box">
+    <div class="lock-ico">🔐</div>
+    <div class="lock-title">Admin Panel</div>
+    <div class="lock-sub">IIT Bombay · Infrastructure Dashboard</div>
+    <input type="password" class="lock-input" id="pwd-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')unlock()"/>
+    <div class="lock-err" id="lock-err">Incorrect password. Try again.</div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="unlock()">Unlock →</button>
+    <div style="font-size:.67rem;color:var(--muted);margin-top:16px">Default password: <strong>iitb2024</strong></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-badge">Admin</div>
+    <div class="hdr-title">Dashboard Admin Panel <span>· IIT Bombay Infrastructure</span></div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <span id="unsaved-badge" style="display:none;background:var(--amber-lt);color:var(--amber);font-size:.68rem;font-weight:700;padding:5px 12px;border-radius:99px;align-items:center;gap:5px">● Unsaved changes</span>
+    <button class="btn btn-success" onclick="exportOverrides()">⬇ Export Overrides JSON</button>
+    <a href="infrastructure_dashboard_live.html" class="btn btn-primary" target="_blank">↗ View Dashboard</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-lbl">Manage</div>
+    <div class="sb-item on" onclick="goSec('projects',this)"><span class="ico">🏗️</span> Projects</div>
+    <div class="sb-item" onclick="goSec('names',this)"><span class="ico">✏️</span> Names &amp; Spellings</div>
+    <div class="sb-item" onclick="goSec('colours',this)"><span class="ico">🎨</span> Category Colours</div>
+    <div class="sb-item" onclick="goSec('priority',this)"><span class="ico">🔴</span> Priority Flags</div>
+    <div class="sb-lbl">Data</div>
+    <div class="sb-item" onclick="goSec('add',this)"><span class="ico">➕</span> Add Project</div>
+    <div class="sb-item" onclick="goSec('numbers',this)"><span class="ico">₹</span> Update Numbers</div>
+    <div class="sb-lbl">Settings</div>
+    <div class="sb-item" onclick="goSec('export',this)"><span class="ico">📤</span> Export &amp; Sync</div>
+    <div class="sb-item" onclick="goSec('password',this)"><span class="ico">🔑</span> Change Password</div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- PROJECTS -->
+    <div class="sec on" id="sec-projects">
+      <div class="sec-title">All Projects</div>
+      <div class="sec-sub">Browse, select and edit any project. Changes are saved locally and applied as overrides on the dashboard.</div>
+      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="proj-search" placeholder="Search project name…" oninput="filterProjects()"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:16px">
+        <div>
+          <div style="font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px" id="proj-count">Loading…</div>
+          <div class="proj-list" id="proj-list"></div>
+        </div>
+        <div id="proj-editor" style="display:none">
+          <div class="card">
+            <div class="card-title">✏️ Edit Project <span class="diff" id="edit-diff" style="display:none">Edited</span></div>
+            <div class="form-row full"><div class="field"><label>Project Name</label><input type="text" id="e-name"/></div></div>
+            <div class="form-row">
+              <div class="field"><label>Category</label>
+                <select id="e-cat">
+                  <option>Academic</option><option>Student Housing</option><option>Research</option>
+                  <option>Non-academic</option><option>Lab</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field"><label>Status</label>
+                <select id="e-status"><option>Active</option><option>Non-Active</option></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Project Cost (₹)</label><input type="number" id="e-cost" placeholder="e.g. 1900000000"/></div>
+              <div class="field"><label>Funds Raised (₹)</label><input type="number" id="e-raised" placeholder="e.g. 500000000"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Funds Received (₹)</label><input type="number" id="e-recv" placeholder="e.g. 400000000"/></div>
+              <div class="field"><label>% Completion (0–100)</label><input type="number" id="e-pct" min="0" max="100" placeholder="e.g. 75"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Built-up Area (sq ft)</label><input type="number" id="e-area" placeholder="e.g. 386209"/></div>
+              <div class="field"><label>Floors</label><input type="text" id="e-floors" placeholder="e.g. G+5"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Start Date</label><input type="date" id="e-start"/></div>
+              <div class="field"><label>Target Completion</label><input type="date" id="e-target"/></div>
+            </div>
+            <div class="form-row full"><div class="field"><label>Progress / Stage</label><input type="text" id="e-progress" placeholder="e.g. Stage3-Under Construction"/></div></div>
+            <div class="form-row full"><div class="field"><label>Donor Name</label><input type="text" id="e-donor"/></div></div>
+            <div class="form-row full"><div class="field"><label>Blocks / Impediments</label><textarea id="e-blocks"></textarea></div></div>
+            <div class="form-row full"><div class="field"><label>Priority</label>
+              <select id="e-priority"><option value="">None</option><option value="High">High</option></select>
+            </div></div>
+            <div class="btn-row">
+              <button class="btn btn-primary" onclick="saveProject()">💾 Save Changes</button>
+              <button class="btn btn-danger" onclick="removeOverride()">↩ Reset to Sheet</button>
+            </div>
+          </div>
+        </div>
+        <div id="proj-placeholder" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.82rem;flex-direction:column;gap:10px;padding:40px">
+          <div style="font-size:2rem">👈</div>
+          <div>Select a project to edit</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAMES & SPELLINGS -->
+    <div class="sec" id="sec-names">
+      <div class="sec-title">Names &amp; Spellings</div>
+      <div class="sec-sub">Fix project name spelling without touching the Google Sheet. Overrides are applied on top of live data.</div>
+      <div class="card">
+        <div class="card-title">📝 Name Corrections</div>
+        <div id="name-list"></div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:12px">Click any name to edit it. Changes are highlighted with an <span class="diff">Edited</span> badge.</div>
+      </div>
+    </div>
+
+    <!-- COLOURS -->
+    <div class="sec" id="sec-colours">
+      <div class="sec-title">Category Colours</div>
+      <div class="sec-sub">Change the colour used for each project category across all charts and labels.</div>
+      <div class="card">
+        <div class="card-title">🎨 Category Colour Palette</div>
+        <div class="swatch-grid" id="colour-grid"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveColours()">💾 Save Colours</button>
+          <button class="btn" onclick="resetColours()">↩ Reset to Default</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRIORITY FLAGS -->
+    <div class="sec" id="sec-priority">
+      <div class="sec-title">Priority Flags</div>
+      <div class="sec-sub">Mark projects as High Priority here. These flags override the Google Sheet's Priority column.</div>
+      <div class="card">
+        <div class="card-title">🔴 High Priority Projects</div>
+        <div id="priority-list"></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="savePriority()">💾 Save Priority Flags</button></div>
+      </div>
+    </div>
+
+    <!-- ADD PROJECT -->
+    <div class="sec" id="sec-add">
+      <div class="sec-title">Add New Project</div>
+      <div class="sec-sub">Add a project that isn't in the Google Sheet yet. It will appear on the dashboard immediately.</div>
+      <div class="card">
+        <div class="card-title">➕ New Project</div>
+        <div class="form-row full"><div class="field"><label>Project Name *</label><input type="text" id="n-name" placeholder="Full project name"/></div></div>
+        <div class="form-row">
+          <div class="field"><label>Category</label><select id="n-cat"><option>Academic</option><option>Student Housing</option><option>Research</option><option>Non-academic</option><option>Lab</option><option>Other</option></select></div>
+          <div class="field"><label>Status</label><select id="n-status"><option>Active</option><option>Non-Active</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Project Cost (₹)</label><input type="number" id="n-cost"/></div>
+          <div class="field"><label>Funds Raised (₹)</label><input type="number" id="n-raised"/></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Built-up Area (sq ft)</label><input type="number" id="n-area"/></div>
+          <div class="field"><label>% Completion (0–100)</label><input type="number" id="n-pct" min="0" max="100"/></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Start Date</label><input type="date" id="n-start"/></div>
+          <div class="field"><label>Target Completion</label><input type="date" id="n-target"/></div>
+        </div>
+        <div class="form-row full"><div class="field"><label>Progress / Stage</label><input type="text" id="n-progress"/></div></div>
+        <div class="form-row full"><div class="field"><label>Donor Name</label><input type="text" id="n-donor"/></div></div>
+        <div class="form-row full"><div class="field"><label>Blocks / Impediments</label><textarea id="n-blocks"></textarea></div></div>
+        <div class="form-row full"><div class="field"><label>Priority</label><select id="n-priority"><option value="">None</option><option value="High">High</option></select></div></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="addProject()">➕ Add to Dashboard</button></div>
+      </div>
+    </div>
+
+    <!-- UPDATE NUMBERS -->
+    <div class="sec" id="sec-numbers">
+      <div class="sec-title">Update Numbers</div>
+      <div class="sec-sub">Quickly update financial figures for any project without editing the full record.</div>
+      <div class="card">
+        <div class="card-title">₹ Quick Financial Update</div>
+        <div class="field" style="margin-bottom:14px"><label>Select Project</label><select id="num-proj" style="width:100%"></select></div>
+        <div class="form-row">
+          <div class="field"><label>Project Cost (₹)</label><input type="number" id="num-cost"/></div>
+          <div class="field"><label>Funds Raised (₹)</label><input type="number" id="num-raised"/></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Funds Received (₹)</label><input type="number" id="num-recv"/></div>
+          <div class="field"><label>% Completion (0–100)</label><input type="number" id="num-pct" min="0" max="100"/></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveNumbers()">💾 Save Numbers</button>
+          <button class="btn" onclick="loadNumbers()">↺ Load Current</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="sec" id="sec-export">
+      <div class="sec-title">Export &amp; Sync</div>
+      <div class="sec-sub">How overrides work and how to push them to the live dashboard.</div>
+      <div class="export-box">
+        <strong>How the Admin Panel works:</strong><br/>
+        All changes you make here are saved to your browser's localStorage as an "overrides" file. The dashboard reads this file and applies your edits on top of live Google Sheets data.<br/><br/>
+        <strong>To push changes to the GitHub dashboard:</strong><br/>
+        1. Click <strong>Export Overrides JSON</strong> above — this downloads <code>overrides.json</code><br/>
+        2. Upload this file to your GitHub repo alongside <code>index.html</code><br/>
+        3. The dashboard will automatically fetch and apply your overrides<br/><br/>
+        <strong>Note:</strong> Overrides always win over Google Sheets data. To reset a project, use "Reset to Sheet" in the project editor.
+      </div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-primary" onclick="exportOverrides()">⬇ Export Overrides JSON</button>
+        <button class="btn btn-danger" onclick="clearAll()">🗑 Clear All Overrides</button>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-title">📊 Override Summary</div>
+        <div id="override-summary" style="font-size:.78rem;line-height:2"></div>
+      </div>
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="sec" id="sec-password">
+      <div class="sec-title">Change Password</div>
+      <div class="sec-sub">Update the admin panel password.</div>
+      <div class="card" style="max-width:400px">
+        <div class="card-title">🔑 New Password</div>
+        <div class="field" style="margin-bottom:12px"><label>Current Password</label><input type="password" id="pwd-old"/></div>
+        <div class="field" style="margin-bottom:12px"><label>New Password</label><input type="password" id="pwd-new"/></div>
+        <div class="field" style="margin-bottom:16px"><label>Confirm New Password</label><input type="password" id="pwd-confirm"/></div>
+        <button class="btn btn-primary" onclick="changePwd()">Update Password</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ CONFIG ══
+const DEFAULT_CAT_COLS = {
+  "Academic":"#2355f5","Student Housing":"#0d9e8a","Research":"#6d4adc",
+  "Non-academic":"#c47b00","Lab":"#0891b2","Other":"#8892b0"
+};
+
+// ══ STORAGE ══
+const load = k => { try{ return JSON.parse(localStorage.getItem("iitb_admin_"+k)||"null"); }catch(e){return null;} };
+const save = (k,v) => localStorage.setItem("iitb_admin_"+k, JSON.stringify(v));
+
+// ══ STATE ══
+let projects = [];
+let overrides = load("overrides") || {};   // {name: {field:val,...}}
+let extraProjects = load("extra") || [];    // [{...full project objects}]
+let catCols = load("catcols") || {...DEFAULT_CAT_COLS};
+let priorities = load("priorities") || {};  // {name: "High"|""}
+let selectedProj = null;
+let filteredProjects = [];
+
+// ══ AUTH ══
+function unlock(){
+  const pwd = document.getElementById("pwd-input").value;
+  const stored = load("password") || "iitb2024";
+  if(pwd === stored){ document.getElementById("lock").style.display="none"; init(); }
+  else{ document.getElementById("lock-err").style.display="block"; }
+}
+document.getElementById("pwd-input").addEventListener("keydown", e=>{ if(e.key==="Enter")unlock(); });
+
+// ══ INIT ══
+async function init(){
+  await loadProjects();
+  renderProjectList();
+  renderColours();
+  renderPriorityList();
+  renderNameList();
+  populateNumSelect();
+  updateOverrideSummary();
+}
+
+async function loadProjects(){
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSfkY7tZfT6wOI7d6bhneIshAORjJci0ooYpEvqEfWw0cTuVcNbPvpIy9UE5dm-mA/pub?output=csv";
+  try{
+    const r = await fetch(CSV_URL+"&t="+Date.now(), {cache:"no-store"});
+    if(r.ok){ const txt = await r.text(); projects = parseCSV(txt); }
+  }catch(e){ console.warn("CSV fetch failed:", e.message); }
+  if(!projects.length){ projects = getFallback(); }
+  projects = [...projects, ...extraProjects];
+  filteredProjects = [...projects];
+}
+
+function getFallback(){
+  // Minimal fallback with known project names
+  return [
+    {name:"Hostel 4",category:"Student Housing",cost:1600000000,raised:200000000,received:169750000,pct:1,area:398426,progress:"Completed and Active",status:"Active",donor:"",blocks:"",target:"",start:"",priority:""},
+    {name:"AB1",category:"Academic",cost:1900000000,raised:1100000000,received:348971000,pct:.991,area:386209,progress:"",status:"Active",donor:"Motilal Oswal (95 Cr), Ashank Desai (ADCPS) (10Cr), Fedex (7.5Cr)",blocks:"Dummy-Planning stage, archictet mismatch",target:"",start:"",priority:""},
+    {name:"ASB1",category:"Research",cost:2180000000,raised:0,received:0,pct:.993,area:0,progress:"Stage3-Under Construction",status:"Active",donor:"",blocks:"Dummy- Fundraising to be started. Some p",target:"",start:"",priority:""},
+  ];
+}
+
+function parseCSV(txt){
+  const lines=txt.trim().split("\n");if(lines.length<2)return[];
+  const pr=r=>{const c=[];let s="",q=false;for(let i=0;i<r.length;i++){if(r[i]==='"'&&!q)q=true;else if(r[i]==='"'&&q&&r[i+1]==='"'){s+='"';i++;}else if(r[i]==='"'&&q)q=false;else if(r[i]===','&&!q){c.push(s.trim());s="";}else s+=r[i];}c.push(s.trim());return c;};
+  const H=pr(lines[0]);
+  const x=(h,fb=[])=>{let i=H.findIndex(c=>c.trim()===h);if(i>=0)return i;for(const f of fb){i=H.findIndex(c=>c.trim().toLowerCase().includes(f.toLowerCase()));if(i>=0)return i;}return -1;};
+  const iN=x("Project Name",["project name"]);const iCat=x("Category",["category"]);const iCo=x("Project Cost",["cost"]);const iCm=x("Funds Committed for Infra",["committed","raised"]);const iRc=x("Received Funds- After  admin  cost",["received"]);const iSt=x("Status",["status"]);const iP=x("% Completion",["completion"]);const iPr=x("Progress",["progress"]);const iT=x("Target Completion",["target"]);const iSd=x("Start Date",["start"]);const iDo=x("Donor Name",["donor"]);const iBl=x("Blocks/Impediments and Redflag",["blocks"]);const iF=x("Floors",["floor"]);const iAr=x("Built-up Area (sq ft)",["area"]);const iPri=H.findIndex(h=>h.toLowerCase().includes("priority"));
+  const num=v=>{if(!v)return null;const s=String(v).replace(/,/g,"").replace(/[₹$%\s]/g,"");const n=parseFloat(s);return isFinite(n)&&n>=0?n:null;};
+  const cl=v=>(!v||v==="nan"||v==="None")?"":String(v).trim();
+  return lines.slice(1).map(l=>pr(l)).filter(c=>c[iN]&&c[iN].trim()).map(c=>{
+    let pct=iP>=0?num(c[iP]):null;if(pct!==null){if(pct>1)pct=pct/100;pct=Math.min(1,Math.max(0,pct));}
+    return{name:c[iN].trim(),category:cl(c[iCat])||"Other",cost:iCo>=0?num(c[iCo]):null,raised:iCm>=0?num(c[iCm]):null,received:iRc>=0?num(c[iRc]):null,status:cl(c[iSt])||"Active",pct,progress:iPr>=0?cl(c[iPr]):"",target:iT>=0?cl(c[iT]):"",start:iSd>=0?cl(c[iSd]):"",donor:iDo>=0?cl(c[iDo]):"",blocks:iBl>=0?cl(c[iBl]):"",floors:iF>=0?cl(c[iF]):"",area:iAr>=0?num(c[iAr]):null,priority:iPri>=0?cl(c[iPri]):""};
+  });
+}
+
+// ══ PROJECT LIST ══
+function renderProjectList(){
+  const list = document.getElementById("proj-list");
+  document.getElementById("proj-count").textContent = filteredProjects.length+" projects";
+  list.innerHTML = filteredProjects.map(p=>{
+    const ov = overrides[p.name];
+    const col = catCols[p.category] || "#8892b0";
+    const isPri = priorities[p.name]==="High" || (p.priority||"").toLowerCase().includes("high");
+    return `<div class="proj-item ${selectedProj===p.name?"sel":""}" onclick="selectProject('${p.name.replace(/'/g,"\\'")}')">
+      <div class="proj-cat" style="background:${col}"></div>
+      <div style="flex:1"><div class="proj-name">${ov?.name||p.name}${ov?` <span class="diff">Edited</span>`:""}</div><div class="proj-meta">${ov?.category||p.category} · ${p.progress||"—"}</div></div>
+      ${isPri?`<div class="proj-pri">🔴 High</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function filterProjects(){
+  const q = document.getElementById("proj-search").value.toLowerCase();
+  filteredProjects = projects.filter(p=>p.name.toLowerCase().includes(q)||(p.category||"").toLowerCase().includes(q));
+  renderProjectList();
+}
+
+function selectProject(name){
+  selectedProj = name;
+  const p = projects.find(x=>x.name===name);
+  if(!p)return;
+  const ov = overrides[name]||{};
+  renderProjectList();
+  document.getElementById("proj-editor").style.display="block";
+  document.getElementById("proj-placeholder").style.display="none";
+  document.getElementById("e-name").value = ov.name??p.name;
+  document.getElementById("e-cat").value = ov.category??p.category;
+  document.getElementById("e-status").value = ov.status??p.status;
+  document.getElementById("e-cost").value = ov.cost??p.cost??'';
+  document.getElementById("e-raised").value = ov.raised??p.raised??'';
+  document.getElementById("e-recv").value = ov.received??p.received??'';
+  document.getElementById("e-pct").value = ov.pct!=null?Math.round((ov.pct??p.pct??0)*100):p.pct!=null?Math.round(p.pct*100):'';
+  document.getElementById("e-area").value = ov.area??p.area??'';
+  document.getElementById("e-floors").value = ov.floors??p.floors??'';
+  document.getElementById("e-start").value = ov.start??p.start??'';
+  document.getElementById("e-target").value = ov.target??p.target??'';
+  document.getElementById("e-progress").value = ov.progress??p.progress??'';
+  document.getElementById("e-donor").value = ov.donor??p.donor??'';
+  document.getElementById("e-blocks").value = ov.blocks??p.blocks??'';
+  document.getElementById("e-priority").value = priorities[name]||(ov.priority??p.priority??'');
+  document.getElementById("edit-diff").style.display = overrides[name]?"inline":"none";
+}
+
+function saveProject(){
+  if(!selectedProj)return;
+  const pct = parseFloat(document.getElementById("e-pct").value);
+  overrides[selectedProj]={
+    name:document.getElementById("e-name").value,
+    category:document.getElementById("e-cat").value,
+    status:document.getElementById("e-status").value,
+    cost:parseFloat(document.getElementById("e-cost").value)||null,
+    raised:parseFloat(document.getElementById("e-raised").value)||null,
+    received:parseFloat(document.getElementById("e-recv").value)||null,
+    pct:isNaN(pct)?null:pct/100,
+    area:parseFloat(document.getElementById("e-area").value)||null,
+    floors:document.getElementById("e-floors").value,
+    start:document.getElementById("e-start").value,
+    target:document.getElementById("e-target").value,
+    progress:document.getElementById("e-progress").value,
+    donor:document.getElementById("e-donor").value,
+    blocks:document.getElementById("e-blocks").value,
+    priority:document.getElementById("e-priority").value,
+  };
+  const pri = document.getElementById("e-priority").value;
+  if(pri==="High")priorities[selectedProj]="High";else delete priorities[selectedProj];
+  save("overrides",overrides); save("priorities",priorities);
+  document.getElementById("edit-diff").style.display="inline";
+  document.getElementById("unsaved-badge").style.display="inline-flex";
+  renderProjectList(); updateOverrideSummary(); renderPriorityList(); renderNameList();
+  toast("Changes saved for "+selectedProj,"ok");
+}
+
+function removeOverride(){
+  if(!selectedProj)return;
+  delete overrides[selectedProj];
+  save("overrides",overrides);
+  selectProject(selectedProj);
+  renderProjectList(); updateOverrideSummary();
+  toast("Reset to Google Sheet data","ok");
+}
+
+// ══ NAME LIST ══
+function renderNameList(){
+  const el = document.getElementById("name-list");
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">` + projects.map(p=>{
+    const ov = overrides[p.name];
+    const displayName = ov?.name || p.name;
+    const edited = ov?.name && ov.name !== p.name;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--s2);border:1.5px solid var(--border);border-radius:var(--rad-sm)">
+      <span style="flex:1;font-size:.8rem;font-weight:${edited?"700":"500"}">${edited?`<span style="color:var(--blue)">${ov.name}</span> <span class="diff">Edited</span><br/><span style="font-size:.66rem;color:var(--muted);font-weight:400;text-decoration:line-through">${p.name}</span>`:displayName}</span>
+      <button class="btn" style="padding:4px 10px;font-size:.67rem" onclick="quickRename('${p.name.replace(/'/g,"\\'")}')">✏️ Edit</button>
+    </div>`;
+  }).join("")+`</div>`;
+}
+
+function quickRename(name){
+  const newName = prompt("Rename project:", overrides[name]?.name||name);
+  if(newName===null||newName.trim()==="")return;
+  if(!overrides[name])overrides[name]={};
+  overrides[name].name = newName.trim();
+  save("overrides",overrides);
+  renderNameList(); renderProjectList(); updateOverrideSummary();
+  toast("Renamed successfully","ok");
+}
+
+// ══ COLOURS ══
+function renderColours(){
+  const grid = document.getElementById("colour-grid");
+  grid.innerHTML = Object.entries(catCols).map(([cat,col])=>`
+    <div class="swatch">
+      <input type="color" value="${col}" id="col-${cat.replace(/\s/g,'-')}" onchange="previewColour('${cat}',this.value)" style="width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:0"/>
+      <div><div class="swatch-name">${cat}</div><div class="swatch-hex" id="hex-${cat.replace(/\s/g,'-')}">${col}</div></div>
+    </div>`).join("");
+}
+
+function previewColour(cat,val){
+  catCols[cat]=val;
+  document.getElementById("hex-"+cat.replace(/\s/g,"-")).textContent=val;
+}
+
+function saveColours(){
+  save("catcols",catCols);
+  document.getElementById("unsaved-badge").style.display="inline-flex";
+  toast("Colours saved","ok");
+}
+
+function resetColours(){
+  catCols={...DEFAULT_CAT_COLS};
+  save("catcols",catCols);
+  renderColours();
+  toast("Reset to default colours","ok");
+}
+
+// ══ PRIORITY ══
+function renderPriorityList(){
+  const el = document.getElementById("priority-list");
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:7px">` + projects.map(p=>{
+    const isHigh = priorities[p.name]==="High"||(p.priority||"").toLowerCase().includes("high");
+    return `<label style="display:flex;align-items:center;gap:12px;padding:10px 13px;background:${isHigh?"var(--rose-lt)":"var(--s2)"};border:1.5px solid ${isHigh?"var(--rose-md)":"var(--border)"};border-radius:var(--rad-sm);cursor:pointer;transition:all .15s">
+      <input type="checkbox" id="pri-${p.name.replace(/[^a-z0-9]/gi,'_')}" ${isHigh?"checked":""} style="width:16px;height:16px;cursor:pointer"/>
+      <span style="font-size:.8rem;font-weight:${isHigh?"700":"500"}">${p.name}</span>
+      <span style="font-size:.7rem;color:var(--muted);margin-left:auto">${p.category}</span>
+      ${isHigh?`<span class="proj-pri">🔴 High</span>`:""}
+    </label>`;
+  }).join("")+`</div>`;
+}
+
+function savePriority(){
+  priorities={};
+  projects.forEach(p=>{
+    const cb = document.getElementById("pri-"+p.name.replace(/[^a-z0-9]/gi,"_"));
+    if(cb&&cb.checked)priorities[p.name]="High";
+  });
+  save("priorities",priorities);
+  renderPriorityList(); renderProjectList(); updateOverrideSummary();
+  document.getElementById("unsaved-badge").style.display="inline-flex";
+  toast(`Saved ${Object.keys(priorities).length} priority flags`,"ok");
+}
+
+// ══ ADD PROJECT ══
+function addProject(){
+  const name = document.getElementById("n-name").value.trim();
+  if(!name){toast("Project name is required","err");return;}
+  const pct = parseFloat(document.getElementById("n-pct").value);
+  const proj = {
+    name,category:document.getElementById("n-cat").value,
+    status:document.getElementById("n-status").value,
+    cost:parseFloat(document.getElementById("n-cost").value)||null,
+    raised:parseFloat(document.getElementById("n-raised").value)||null,
+    received:null,
+    pct:isNaN(pct)?null:pct/100,
+    area:parseFloat(document.getElementById("n-area").value)||null,
+    progress:document.getElementById("n-progress").value,
+    donor:document.getElementById("n-donor").value,
+    blocks:document.getElementById("n-blocks").value,
+    target:document.getElementById("n-target").value,
+    start:document.getElementById("n-start").value,
+    floors:"",features:"",wbs:"",updated:"",
+    priority:document.getElementById("n-priority").value,
+  };
+  extraProjects = [...extraProjects.filter(p=>p.name!==name), proj];
+  projects = [...projects.filter(p=>p.name!==name), proj];
+  filteredProjects = [...projects];
+  save("extra",extraProjects);
+  renderProjectList(); updateOverrideSummary();
+  document.getElementById("n-name").value="";
+  document.getElementById("unsaved-badge").style.display="inline-flex";
+  toast("Project added: "+name,"ok");
+}
+
+// ══ UPDATE NUMBERS ══
+function populateNumSelect(){
+  const sel = document.getElementById("num-proj");
+  sel.innerHTML = projects.map(p=>`<option value="${p.name}">${p.name}</option>`).join("");
+}
+
+function loadNumbers(){
+  const name = document.getElementById("num-proj").value;
+  const p = projects.find(x=>x.name===name);
+  const ov = overrides[name]||{};
+  if(!p)return;
+  document.getElementById("num-cost").value=ov.cost??p.cost??'';
+  document.getElementById("num-raised").value=ov.raised??p.raised??'';
+  document.getElementById("num-recv").value=ov.received??p.received??'';
+  const pct=ov.pct??p.pct;
+  document.getElementById("num-pct").value=pct!=null?Math.round(pct*100):'';
+}
+
+function saveNumbers(){
+  const name = document.getElementById("num-proj").value;
+  if(!name)return;
+  const pct = parseFloat(document.getElementById("num-pct").value);
+  if(!overrides[name])overrides[name]={};
+  overrides[name].cost=parseFloat(document.getElementById("num-cost").value)||null;
+  overrides[name].raised=parseFloat(document.getElementById("num-raised").value)||null;
+  overrides[name].received=parseFloat(document.getElementById("num-recv").value)||null;
+  overrides[name].pct=isNaN(pct)?null:pct/100;
+  save("overrides",overrides);
+  document.getElementById("unsaved-badge").style.display="inline-flex";
+  updateOverrideSummary();
+  toast("Numbers updated for "+name,"ok");
+}
+
+// ══ EXPORT ══
+function exportOverrides(){
+  const data={overrides,priorities,catCols,extra:extraProjects,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="overrides.json";a.click();
+  toast("Exported overrides.json","ok");
+}
+
+function clearAll(){
+  if(!confirm("Clear ALL admin overrides? This cannot be undone."))return;
+  overrides={}; extraProjects=[]; priorities={};
+  save("overrides",overrides);save("extra",extraProjects);save("priorities",priorities);
+  renderProjectList(); renderPriorityList(); renderNameList(); updateOverrideSummary();
+  document.getElementById("unsaved-badge").style.display="none";
+  toast("All overrides cleared","ok");
+}
+
+function updateOverrideSummary(){
+  const el = document.getElementById("override-summary");
+  if(!el)return;
+  const nc=Object.keys(overrides).length;
+  const np=Object.keys(priorities).filter(k=>priorities[k]==="High").length;
+  const ne=extraProjects.length;
+  el.innerHTML=`<div>📝 <strong>${nc}</strong> project overrides active</div><div>🔴 <strong>${np}</strong> high priority flags</div><div>➕ <strong>${ne}</strong> extra projects added</div><div style="color:var(--muted);font-size:.69rem;margin-top:8px">Last saved: ${load("overrides")?"Yes":"Never"}</div>`;
+}
+
+// ══ PASSWORD ══
+function changePwd(){
+  const old=document.getElementById("pwd-old").value;
+  const nw=document.getElementById("pwd-new").value;
+  const cf=document.getElementById("pwd-confirm").value;
+  const stored=load("password")||"iitb2024";
+  if(old!==stored){toast("Current password incorrect","err");return;}
+  if(nw!==cf){toast("Passwords do not match","err");return;}
+  if(nw.length<4){toast("Password too short (min 4 chars)","err");return;}
+  save("password",nw);
+  toast("Password updated successfully","ok");
+  document.getElementById("pwd-old").value="";document.getElementById("pwd-new").value="";document.getElementById("pwd-confirm").value="";
+}
+
+// ══ NAVIGATION ══
+function goSec(id,el){
+  document.querySelectorAll(".sec").forEach(s=>s.classList.remove("on"));
+  document.querySelectorAll(".sb-item").forEach(s=>s.classList.remove("on"));
+  document.getElementById("sec-"+id).classList.add("on");
+  el.classList.add("on");
+}
+
+// ══ TOAST ══
+let toastTimer;
+function toast(msg,type="ok"){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.className="toast on "+(type==="ok"?"ok":"err");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),3000);
+}
+</script>
+</body>
+</html>
